@@ -1,11 +1,11 @@
-import {act, renderHook} from '@testing-library/react-hooks'
+import {RenderHookResult, Renderer, act, renderHook} from '@testing-library/react-hooks'
 import testUtils from '../../lib/test-utils'
 import {useAuthor, useAuthorComments, useAuthorAvatar, useResolvedAuthorAddress, setPlebbitJs, useAccount, useAuthorAddress} from '../..'
 import {commentsPerPage} from '../../stores/authors-comments'
 import {useNftMetadataUrl, useNftImageUrl, useVerifiedAuthorAvatarSignature, verifyAuthorAvatarSignature} from './author-avatars'
 import localForageLru from '../../lib/localforage-lru'
 import {ethers} from 'ethers'
-import {Nft, Author} from '../../types'
+import {Nft, Author, UseAuthorAddressResult} from '../../types'
 import PlebbitJsMock, {Plebbit} from '../../lib/plebbit-js/plebbit-js-mock'
 setPlebbitJs(PlebbitJsMock)
 
@@ -66,13 +66,14 @@ describe('authors', () => {
     testUtils.restoreAll()
   })
 
+  // todo logic paths missing based on the hook logic: normal crypto name
   describe('useAuthorAddress', () => {
-    let rendered: any, waitFor: any
+    let rendered: RenderHookResult<any, UseAuthorAddressResult, Renderer<any>>, waitFor: any
 
     beforeEach(async () => {
-      rendered = renderHook<any, any>((options: any) => {
-        const useAuthorCommentsResult = useAuthorAddress(options)
-        return useAuthorCommentsResult
+      rendered = renderHook<any, UseAuthorAddressResult>((options: any) => {
+        const useAuthorAddressResult = useAuthorAddress(options)
+        return useAuthorAddressResult
       })
       waitFor = testUtils.createWaitFor(rendered)
     })
@@ -83,10 +84,11 @@ describe('authors', () => {
 
     test('no crypto name', async () => {
       rendered.rerender({comment})
-      await waitFor(() => rendered.result.current.authorAddress && rendered.result.current.shortAuthorAddress)
-      expect(rendered.result.current.authorAddress).toBe(comment.author.address)
-      expect(typeof rendered.result.current.shortAuthorAddress).toBe('string')
-      expect(rendered.result.current.error).toBe(undefined)
+      const current: UseAuthorAddressResult = rendered.result.current
+      await waitFor(() => current.authorAddress && current.shortAuthorAddress)
+      expect(current.authorAddress).toBe(comment.author.address)
+      expect(typeof current.shortAuthorAddress).toBe('string')
+      expect(current.error).toBe(undefined)
     })
   })
 

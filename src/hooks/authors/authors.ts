@@ -236,7 +236,7 @@ export function useAuthorAddress(options?: UseAuthorAddressOptions): UseAuthorAd
   const [resolvedAddress, setResolvedAddress] = useState<string>()
   const isCryptoName = !!comment?.author?.address?.match?.('.')
   // don't waste time calculating plebbit address if not a crypto name
-  const signerAddress = usePlebbitAddress(isCryptoName && comment?.signature?.publicKey)
+  const signerAddress: string | undefined = usePlebbitAddress(isCryptoName && comment?.signature?.publicKey)
 
   useEffect(() => {
     if (!account?.plebbit || !comment?.author?.address) {
@@ -251,26 +251,21 @@ export function useAuthorAddress(options?: UseAuthorAddressOptions): UseAuthorAd
   // use signer address by default
   let authorAddress = signerAddress
   // if author address was resolved successfully, use author address
-  if (resolvedAddress && signerAddress === resolvedAddress) {
-    authorAddress = comment?.author?.address
-  }
   // if isn't crypto name, always use author address
-  if (!isCryptoName) {
+  if ((resolvedAddress && signerAddress === resolvedAddress) || !isCryptoName) {
     authorAddress = comment?.author?.address
   }
 
   const shortAuthorAddress = authorAddress && PlebbitJs.Plebbit.getShortAddress(authorAddress)
 
-  return useMemo(
-    () => ({
-      authorAddress,
-      shortAuthorAddress,
-      state: 'initializing',
-      error: undefined,
-      errors: [],
-    }),
-    [authorAddress, shortAuthorAddress]
-  )
+  const defaultAuthorAddress: UseAuthorAddressResult = {
+    authorAddress,
+    shortAuthorAddress,
+    state: 'initializing',
+    error: undefined,
+    errors: [],
+  }
+  return useMemo(() => defaultAuthorAddress, [authorAddress, shortAuthorAddress])
 }
 
 /**
