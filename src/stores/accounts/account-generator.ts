@@ -58,7 +58,7 @@ export const generateDefaultAccount = async () => {
   const plebbit = await PlebbitJs.Plebbit(plebbitOptions)
   // handle errors or error events are uncaught
   // no need to log them because plebbit-js already logs them
-  plebbit.on('error', (error: any) => log.error('uncaught plebbit instance error, should never happen', {error}))
+  plebbit.on('error', (error) => log.error('uncaught plebbit instance error, should never happen', {error}))
 
   const signer = await plebbit.createSigner()
   const author = {

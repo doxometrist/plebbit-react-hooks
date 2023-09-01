@@ -107,7 +107,7 @@ export const fetchCommentLinkDimensions = async (link: string) => {
         linkWidth: dimensions.width,
         linkHeight: dimensions.height,
       }
-    } catch (error: any) {
+    } catch (error) {
       log.error('fetchCommentLinkDimensions error', {error, link})
     }
   }

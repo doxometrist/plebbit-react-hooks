@@ -56,7 +56,7 @@ export function useFeed(options?: UseFeedOptions): UseFeedResult {
         throw Error('useFeed cannot load more feed not initalized yet')
       }
       incrementFeedPageNumber(feedName)
-    } catch (e: any) {
+    } catch (e) {
       // wait 100 ms so infinite scroll doesn't spam this function
       await new Promise((r) => setTimeout(r, 50))
       setErrors([...errors, e])

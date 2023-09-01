@@ -92,7 +92,7 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
         accountsStore
           .getState()
           .accountsActionsInternal.addCidToAccountComment(comment)
-          .catch((error: any) => log.error('accountsActionsInternal.addCidToAccountComment error', {comment, error}))
+          .catch((error) => log.error('accountsActionsInternal.addCidToAccountComment error', {comment, error}))
       )
     }
 

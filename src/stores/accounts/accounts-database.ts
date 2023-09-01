@@ -29,7 +29,7 @@ const getAccounts = async (accountIds: string[]) => {
     accounts[accountId].plebbit = await PlebbitJs.Plebbit(accounts[accountId].plebbitOptions)
     // handle errors or error events are uncaught
     // no need to log them because plebbit-js already logs them
-    accounts[accountId].plebbit.on('error', (error: any) => log.error('uncaught plebbit instance error, should never happen', {error}))
+    accounts[accountId].plebbit.on('error', (error) => log.error('uncaught plebbit instance error, should never happen', {error}))
   }
   return accounts
 }
@@ -159,7 +159,7 @@ const removeAccount = async (account: Account) => {
   }
 }
 
-const accountsCommentsDatabases: any = {}
+const accountsCommentsDatabases: Record<string, LocalForage> = {}
 const getAccountCommentsDatabase = (accountId: string) => {
   assert(accountId && typeof accountId === 'string', `getAccountCommentsDatabase '${accountId}' not a string`)
   if (!accountsCommentsDatabases[accountId]) {

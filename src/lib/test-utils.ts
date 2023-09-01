@@ -7,7 +7,7 @@ import {resetAuthorsCommentsStore, resetAuthorsCommentsDatabaseAndStore} from '.
 import localForageLru from './localforage-lru'
 import localForage from 'localforage'
 
-const restorables: any = []
+const restorables: (() => void)[] = []
 
 export const silenceUpdateUnmountedComponentWarning = () => {
   const originalError = console.error

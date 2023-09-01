@@ -50,7 +50,7 @@ export function useAuthorComments(options?: UseAuthorCommentsOptions): UseAuthor
     }
     try {
       addAuthorCommentsToStore(authorCommentsName, authorAddress, commentCid, filter, account)
-    } catch (error: any) {
+    } catch (error) {
       log.error('useAuthorComments addAuthorCommentsToStore error', {authorCommentsName, error})
     }
   }, [authorCommentsName, commentCid])
@@ -61,7 +61,7 @@ export function useAuthorComments(options?: UseAuthorCommentsOptions): UseAuthor
         throw Error('useAuthorComments cannot load more authorComments not initalized yet')
       }
       incrementPageNumber(authorCommentsName)
-    } catch (e: any) {
+    } catch (e) {
       // wait 100 ms so infinite scroll doesn't spam this function
       await new Promise((r) => setTimeout(r, 50))
       // TODO: maybe add these errors to errors array
@@ -245,7 +245,7 @@ export function useAuthorAddress(options?: UseAuthorAddressOptions): UseAuthorAd
     account.plebbit
       .resolveAuthorAddress(comment?.author?.address)
       .then((resolvedAddress: string) => setResolvedAddress(resolvedAddress))
-      .catch((error: any) => log.error('useAuthorAddress error', {error, comment}))
+      .catch((error) => log.error('useAuthorAddress error', {error, comment}))
   }, [account?.plebbit, comment?.author?.address])
 
   // use signer address by default
@@ -350,7 +350,7 @@ export function useResolvedAuthorAddress(options?: UseResolvedAuthorAddressOptio
           if (res !== resolvedAddress) {
             setResolvedAddress(res)
           }
-        } catch (error: any) {
+        } catch (error) {
           setErrors([...errors, error])
           setState('failed')
           setResolvedAddress(undefined)

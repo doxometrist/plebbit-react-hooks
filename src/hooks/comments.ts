@@ -19,14 +19,14 @@ export function useComment(options?: UseCommentOptions): UseCommentResult {
   assert(!options || typeof options === 'object', `useComment options argument '${options}' not an object`)
   const {commentCid, accountName} = options || {}
   const account = useAccount({accountName})
-  const commentFromStore = useCommentsStore((state: any) => state.comments[commentCid || ''])
-  const addCommentToStore = useCommentsStore((state: any) => state.addCommentToStore)
-  const subplebbitsPagesComment = useSubplebbitsPagesStore((state: any) => state.comments[commentCid || ''])
-  const errors = useCommentsStore((state: any) => state.errors[commentCid || ''])
+  const commentFromStore = useCommentsStore((state) => state.comments[commentCid || ''])
+  const addCommentToStore = useCommentsStore((state) => state.addCommentToStore)
+  const subplebbitsPagesComment = useSubplebbitsPagesStore((state) => state.comments[commentCid || ''])
+  const errors = useCommentsStore((state) => state.errors[commentCid || ''])
 
   // get account comment of the cid if any
-  const accountCommentInfo = useAccountsStore((state: any) => state.commentCidsToAccountsComments[commentCid || ''])
-  const accountComment = useAccountsStore((state: any) => state.accountsComments[accountCommentInfo?.accountId || '']?.[Number(accountCommentInfo?.accountCommentIndex)])
+  const accountCommentInfo = useAccountsStore((state) => state.commentCidsToAccountsComments[commentCid || ''])
+  const accountComment = useAccountsStore((state) => state.accountsComments[accountCommentInfo?.accountId || '']?.[Number(accountCommentInfo?.accountCommentIndex)])
 
   useEffect(() => {
     if (!commentCid || !account) {
@@ -107,16 +107,13 @@ export function useComments(options?: UseCommentsOptions): UseCommentsResult {
   assert(!options || typeof options === 'object', `useComments options argument '${options}' not an object`)
   const {commentCids, accountName} = options || {}
   const account = useAccount({accountName})
-  const commentsStoreComments: (Comment | undefined)[] = useCommentsStore(
-    (state: any) => (commentCids || []).map((commentCid) => state.comments[commentCid || '']),
-    shallow
-  )
+  const commentsStoreComments: (Comment | undefined)[] = useCommentsStore((state) => (commentCids || []).map((commentCid) => state.comments[commentCid || '']), shallow)
   const subplebbitsPagesComments: (Comment | undefined)[] = useSubplebbitsPagesStore(
-    (state: any) => (commentCids || []).map((commentCid) => state.comments[commentCid || '']),
+    (state) => (commentCids || []).map((commentCid) => state.comments[commentCid || '']),
     shallow
   )
 
-  const addCommentToStore = useCommentsStore((state: any) => state.addCommentToStore)
+  const addCommentToStore = useCommentsStore((state) => state.addCommentToStore)
 
   useEffect(() => {
     if (!commentCids || !account) {

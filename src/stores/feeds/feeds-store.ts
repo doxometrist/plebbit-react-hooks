@@ -33,7 +33,7 @@ export const defaultPostsPerPage = 25
 export const subplebbitPostsLeftBeforeNextPage = 50
 
 // reset all event listeners in between tests
-export const listeners: any = []
+export const listeners: Subplebbit[] = []
 
 export type FeedsState = {
   feedsOptions: FeedsOptions
@@ -164,7 +164,7 @@ const feedsStore = createStore<FeedsState>((setState: Function, getState: Functi
       const bufferedFeedsSubplebbitsPostCounts = getFeedsSubplebbitsPostCounts(feedsOptions, bufferedFeeds)
       const feedsHaveMore = getFeedsHaveMore(feedsOptions, bufferedFeeds, subplebbits, subplebbitsPages, accounts)
       // set new feeds
-      setState((state: any) => ({bufferedFeeds, loadedFeeds, bufferedFeedsSubplebbitsPostCounts, feedsHaveMore}))
+      setState((state) => ({bufferedFeeds, loadedFeeds, bufferedFeedsSubplebbitsPostCounts, feedsHaveMore}))
       log.trace('feedsStore.updateFeeds', {feedsOptions, bufferedFeeds, loadedFeeds, bufferedFeedsSubplebbitsPostCounts, feedsHaveMore, subplebbits, subplebbitsPages})
     }, timeUntilNextUpdate)
   },
@@ -366,7 +366,7 @@ export const resetFeedsStore = async () => {
   previousSubplebbitsPages = {}
   updateFeedsPending = false
   // remove all event listeners
-  listeners.forEach((listener: any) => listener.removeAllListeners())
+  listeners.forEach((listener) => listener.removeAllListeners())
   // destroy all component subscriptions to the store
   feedsStore.destroy()
   // restore original state

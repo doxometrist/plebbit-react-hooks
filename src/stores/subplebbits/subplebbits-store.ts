@@ -12,7 +12,7 @@ import subplebbitsPagesStore from '../subplebbits-pages'
 let plebbitGetSubplebbitPending: {[key: string]: boolean} = {}
 
 // reset all event listeners in between tests
-export const listeners: any = []
+export const listeners: Subplebbit[] = []
 
 export type SubplebbitsState = {
   subplebbits: Subplebbits
@@ -79,14 +79,14 @@ const subplebbitsStore = createStore<SubplebbitsState>((setState: Function, getS
     // success getting subplebbit
     await subplebbitsDatabase.setItem(subplebbitAddress, utils.clone(subplebbit))
     log('subplebbitsStore.addSubplebbitToStore', {subplebbitAddress, subplebbit, account})
-    setState((state: any) => ({subplebbits: {...state.subplebbits, [subplebbitAddress]: utils.clone(subplebbit)}}))
+    setState((state) => ({subplebbits: {...state.subplebbits, [subplebbitAddress]: utils.clone(subplebbit)}}))
 
     // the subplebbit has published new posts
     subplebbit.on('update', async (updatedSubplebbit: Subplebbit) => {
       updatedSubplebbit = utils.clone(updatedSubplebbit)
       await subplebbitsDatabase.setItem(subplebbitAddress, updatedSubplebbit)
       log('subplebbitsStore subplebbit update', {subplebbitAddress, updatedSubplebbit, account})
-      setState((state: any) => ({subplebbits: {...state.subplebbits, [subplebbitAddress]: updatedSubplebbit}}))
+      setState((state) => ({subplebbits: {...state.subplebbits, [subplebbitAddress]: updatedSubplebbit}}))
 
       // if a subplebbit has a role with an account's address add it to the account.subplebbits
       accountsStore.getState().accountsActionsInternal.addSubplebbitRoleToAccountsSubplebbits(updatedSubplebbit)
@@ -141,7 +141,7 @@ const subplebbitsStore = createStore<SubplebbitsState>((setState: Function, getS
     await subplebbitsDatabase.setItem(subplebbitAddress, updatedSubplebbit)
     await subplebbitsDatabase.setItem(subplebbit.address, updatedSubplebbit)
     log('subplebbitsStore.editSubplebbit', {subplebbitAddress, subplebbitEditOptions, subplebbit, account})
-    setState((state: any) => ({
+    setState((state) => ({
       subplebbits: {
         ...state.subplebbits,
         // edit react state of both old and new subplebbit address to not break the UI
@@ -168,7 +168,7 @@ const subplebbitsStore = createStore<SubplebbitsState>((setState: Function, getS
     const subplebbit = await account.plebbit.createSubplebbit(createSubplebbitOptions)
     await subplebbitsDatabase.setItem(subplebbit.address, utils.clone(subplebbit))
     log('subplebbitsStore.createSubplebbit', {createSubplebbitOptions, subplebbit, account})
-    setState((state: any) => ({subplebbits: {...state.subplebbits, [subplebbit.address]: utils.clone(subplebbit)}}))
+    setState((state) => ({subplebbits: {...state.subplebbits, [subplebbit.address]: utils.clone(subplebbit)}}))
     return subplebbit
   },
 
@@ -181,15 +181,13 @@ const subplebbitsStore = createStore<SubplebbitsState>((setState: Function, getS
     await subplebbit.delete()
     await subplebbitsDatabase.removeItem(subplebbitAddress)
     log('subplebbitsStore.deleteSubplebbit', {subplebbitAddress, subplebbit, account})
-    setState((state: any) => ({subplebbits: {...state.subplebbits, [subplebbitAddress]: undefined}}))
+    setState((state) => ({subplebbits: {...state.subplebbits, [subplebbitAddress]: undefined}}))
   },
 }))
 
 const getSubplebbitFromDatabase = async (subplebbitAddress: string, account: Account) => {
-  const subplebbitData: any = await subplebbitsDatabase.getItem(subplebbitAddress)
-  if (!subplebbitData) {
-    return
-  }
+  const subplebbitData: Subplebbit | null = await subplebbitsDatabase.getItem<Subplebbit>(subplebbitAddress)
+  if (!subplebbitData) return
   const subplebbit = await account.plebbit.createSubplebbit(subplebbitData)
   return subplebbit
 }
@@ -200,7 +198,7 @@ const originalState = subplebbitsStore.getState()
 export const resetSubplebbitsStore = async () => {
   plebbitGetSubplebbitPending = {}
   // remove all event listeners
-  listeners.forEach((listener: any) => listener.removeAllListeners())
+  listeners.forEach((listener) => listener.removeAllListeners())
   // destroy all component subscriptions to the store
   subplebbitsStore.destroy()
   // restore original state

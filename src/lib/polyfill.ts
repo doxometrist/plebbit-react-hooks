@@ -3,7 +3,7 @@
 
 // fix "ReferenceError: process is not defined" in "assert" package
 if (window.process === undefined) {
-  const processPolyfill: any = {}
+  const processPolyfill = {}
   // @ts-ignore
   window.process = processPolyfill
 }

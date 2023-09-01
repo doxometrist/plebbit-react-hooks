@@ -33,6 +33,8 @@ import type {
   UseAccountResult,
   UsePubsubSubscribeOptions,
   UsePubsubSubscribeResult,
+  Subplebbit,
+  AccountSubplebbit,
 } from '../../types'
 import {filterPublications, useAccountsWithCalculatedProperties, useAccountWithCalculatedProperties, useCalculatedNotifications} from './utils'
 import useInterval from '../utils/use-interval'
@@ -66,17 +68,24 @@ export function useAccount(options?: UseAccountOptions): UseAccountResult {
   return account
 }
 
+interface AccountsResponse {
+  accounts: Account[]
+  state: 'succeeded' | 'initializing'
+  error: null | string
+  errors: never[]
+}
+
 /**
  * Return all accounts in the order of `accountsStore.accountIds`. To reorder, use `accountsActions.setAccountsOrder(accountNames)`.
  */
-export function useAccounts() {
+export function useAccounts(): AccountsResponse {
   const accountIds = useAccountsStore((state) => state.accountIds)
   const accountsStore = useAccountsStore((state) => state.accounts)
   const accountsComments = useAccountsStore((state) => state.accountsComments)
   const accountsCommentsReplies = useAccountsStore((state) => state.accountsCommentsReplies)
   const accounts = useAccountsWithCalculatedProperties(accountsStore, accountsComments, accountsCommentsReplies)
   const accountsArray: Account[] = useMemo(() => {
-    const accountsArray = []
+    const accountsArray: Account[] = []
     if (accountIds?.length && accounts) {
       for (const accountId of accountIds) {
         accountsArray.push(accounts[accountId])
@@ -93,7 +102,7 @@ export function useAccounts() {
     () => ({
       accounts: accountsArray,
       state,
-      error: undefined,
+      error: null,
       errors: [],
     }),
     [accountsArray, state]
@@ -112,7 +121,7 @@ export function useAccountSubplebbits(options?: UseAccountSubplebbitsOptions): U
   // get all unique account subplebbit addresses
   const ownerSubplebbitAddresses = useListSubplebbits()
   const uniqueSubplebbitAddresses: string[] = useMemo(() => {
-    const accountSubplebbitAddresses = []
+    const accountSubplebbitAddresses: string[] = []
     if (accountsStoreAccountSubplebbits) {
       for (const subplebbitAddress in accountsStoreAccountSubplebbits) {
         accountSubplebbitAddresses.push(subplebbitAddress)
@@ -124,8 +133,11 @@ export function useAccountSubplebbits(options?: UseAccountSubplebbitsOptions): U
 
   // fetch all subplebbit data
   const {subplebbits: subplebbitsArray} = useSubplebbits({subplebbitAddresses: uniqueSubplebbitAddresses, accountName})
-  const subplebbits: any = useMemo(() => {
-    const subplebbits: any = {}
+  const subplebbits: Subplebbit[] = useMemo(() => {
+    // alt map syntax
+    // const newSubplebbits = subplebbitsArray.map((m, i)=>{return {...m, address: uniqueSubplebbitAddresses[i]}})
+
+    const subplebbits: Subplebbit[] = []
     for (const [i, subplebbit] of subplebbitsArray.entries()) {
       subplebbits[uniqueSubplebbitAddresses[i]] = {
         ...subplebbit,
@@ -137,8 +149,8 @@ export function useAccountSubplebbits(options?: UseAccountSubplebbitsOptions): U
   }, [subplebbitsArray, uniqueSubplebbitAddresses])
 
   // merged subplebbit data with account.subplebbits data
-  const accountSubplebbits: any = useMemo(() => {
-    const accountSubplebbits: any = {...subplebbits}
+  const accountSubplebbits: AccountSubplebbit[] = useMemo(() => {
+    const accountSubplebbits: AccountSubplebbit[] = {...subplebbits}
     if (accountsStoreAccountSubplebbits) {
       for (const subplebbitAddress in accountsStoreAccountSubplebbits) {
         accountSubplebbits[subplebbitAddress] = {
@@ -196,7 +208,7 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
         throw Error('useNotifications cannot mark as read accounts not initalized yet')
       }
       accountsActionsInternal.markNotificationsAsRead(account)
-    } catch (e: any) {
+    } catch (e) {
       setErrors([...errors, e])
     }
   }
@@ -421,6 +433,14 @@ export function useAccountEdits(options?: UseAccountEditsOptions): UseAccountEdi
   )
 }
 
+interface EditedResult {
+  editedComment: undefined
+  succeededEdits: {}
+  pendingEdits: {}
+  failedEdits: {}
+  state?: 'failed' | 'succeeded' | 'pending'
+}
+
 /**
  * Returns the comment edited (if has any edits), as well as the pending, succeeded or failed state of the edit.
  */
@@ -435,8 +455,8 @@ export function useEditedComment(options?: UseEditedCommentOptions): UseEditedCo
     initialState = 'unedited'
   }
 
-  const editedResult = useMemo(() => {
-    const editedResult: any = {
+  const editedResult: EditedResult = useMemo(() => {
+    const editedResult: EditedResult = {
       editedComment: undefined,
       succeededEdits: {},
       pendingEdits: {},
@@ -606,7 +626,7 @@ export function usePubsubSubscribe(options?: UsePubsubSubscribeOptions): UsePubs
     account.plebbit
       .pubsubSubscribe(subplebbitAddress)
       .then(() => setState('succeeded'))
-      .catch((error: any) => {
+      .catch((error) => {
         setErrors([...errors, error])
         setState('failed')
         log.error('usePubsubSubscribe plebbit.pubsubSubscribe error', {subplebbitAddress, error})
@@ -614,7 +634,7 @@ export function usePubsubSubscribe(options?: UsePubsubSubscribeOptions): UsePubs
 
     // unsub on component unmount
     return function () {
-      account.plebbit.pubsubUnsubscribe(subplebbitAddress).catch((error: any) => {
+      account.plebbit.pubsubUnsubscribe(subplebbitAddress).catch((error) => {
         setErrors([...errors, error])
         log.error('usePubsubSubscribe plebbit.pubsubUnsubscribe error', {subplebbitAddress, error})
       })

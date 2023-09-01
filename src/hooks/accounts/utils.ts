@@ -19,11 +19,17 @@ import PlebbitJs from '../../lib/plebbit-js'
 import Logger from '@plebbit/plebbit-logger'
 const log = Logger('plebbit-react-hooks:accounts:hooks')
 
+interface Publication {
+  subplebbitAddress: string
+  commentCid: string
+  parentCid: string
+  postCid: string
+}
 /**
  * Filter publications, for example only get comments that are posts, votes in a certain subplebbit, etc.
  * Check AccountPublicationsFilter type in types.tsx for more information, e.g. filter = {subplebbitAddresses: ['memes.eth']}.
  */
-export const filterPublications = (publications: any, filter: AccountPublicationsFilter) => {
+export const filterPublications = (publications: Publication[], filter: AccountPublicationsFilter) => {
   for (const postCid of filter.postCids || []) {
     assert(postCid && typeof postCid === 'string', `accountCommentsFilter postCid '${postCid}' not a string`)
   }
@@ -36,7 +42,7 @@ export const filterPublications = (publications: any, filter: AccountPublication
   for (const parentCid of filter.parentCids || []) {
     assert(parentCid && typeof parentCid === 'string', `accountCommentsFilter parentCid '${parentCid}' not a string`)
   }
-  const filteredPublications = []
+  const filteredPublications: Publication[] = []
   for (const publication of publications) {
     let isFilteredOut = false
     if (filter.subplebbitAddresses?.length && !filter.subplebbitAddresses.includes(publication.subplebbitAddress)) {
@@ -74,7 +80,7 @@ export const useCalculatedNotifications = (account?: Account, accountCommentsRep
 
 // accountsBlockedAddresses must be cached to prevent rerenders
 // TODO: add accountsBlockedAddresses as an object in the store that can easily be === checked for equality
-const getAccountsBlockedAddressesNoCache = (...args: any) => {
+const getAccountsBlockedAddressesNoCache = (...args) => {
   const accountsBlockedAddresses: {[accountId: string]: {[address: string]: boolean}} = {}
   const separator = Math.ceil(args.length / 2)
   for (const [i] of args.entries()) {

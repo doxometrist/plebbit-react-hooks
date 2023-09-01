@@ -43,7 +43,7 @@ export function useNftMetadataUrl(nft?: Nft, accountName?: string) {
       try {
         const url = await getNftMetadataUrl(...getNftMetadataUrlArgs)
         setNftMetadataUrl(url)
-      } catch (error: any) {
+      } catch (error) {
         setError(error)
         log.error('useNftMetadataUrl getNftMetadataUrl error', {nft, ipfsGatewayUrl, chainProviders, error})
       }
@@ -81,7 +81,7 @@ export function useNftImageUrl(nftMetadataUrl?: string, accountName?: string) {
       try {
         const url = await getNftImageUrl(nftMetadataUrl, ipfsGatewayUrl)
         setImageUrl(url)
-      } catch (error: any) {
+      } catch (error) {
         setError(error)
         log.error('useNftImageUrl getNftImageUrl error', {nftMetadataUrl, ipfsGatewayUrl, error})
       }
@@ -113,7 +113,7 @@ export function useVerifiedAuthorAvatarSignature(author?: Author, accountName?: 
       try {
         const res = await verifyAuthorAvatarSignature(author.avatar, author.address, chainProviders)
         setVerified(res)
-      } catch (error: any) {
+      } catch (error) {
         setError(error)
         log.error('useVerifiedAuthorAvatarSignature verifyAuthorAvatarSignature error', {author, chainProviders, error})
       }
@@ -129,7 +129,7 @@ export function useVerifiedAuthorAvatarSignature(author?: Author, accountName?: 
   return {verified, error}
 }
 
-const whitelistedTokenAddresses: any = {
+const whitelistedTokenAddresses: Record<string, boolean> = {
   // xpleb nfts
   '0x890a2e81836e0e76e0f49995e6b51ca6ce6f39ed': true,
   // plebsquat
@@ -175,18 +175,26 @@ export const verifyAuthorAvatarSignature = async (nft: Nft, authorAddress: strin
     chainProviders?.[nft?.chainTicker]?.chainId
   )
 
-  let messageThatShouldBeSigned: any = {}
+  interface MessageForSigning {
+    domainSeparator?: string
+    authorAddress?: string
+    timestamp?: number
+    tokenAddress?: string
+    tokenId?: string
+  }
+
   // the property names must be in this order for the signature to match
   // insert props one at a time otherwise babel/webpack will reorder
+  let messageThatShouldBeSigned: MessageForSigning = {}
   messageThatShouldBeSigned.domainSeparator = 'plebbit-author-avatar'
   messageThatShouldBeSigned.authorAddress = authorAddress
   messageThatShouldBeSigned.timestamp = nft.timestamp
   messageThatShouldBeSigned.tokenAddress = nft.address
   messageThatShouldBeSigned.tokenId = nft.id // must be a type string, not number
-  // use plain JSON so the user can read what he's signing
-  messageThatShouldBeSigned = JSON.stringify(messageThatShouldBeSigned)
 
-  const signatureAddress = ethers.utils.verifyMessage(messageThatShouldBeSigned, nft.signature.signature)
+  // use plain JSON so the user can read what he's signing
+  const j = JSON.stringify(messageThatShouldBeSigned)
+  const signatureAddress = ethers.utils.verifyMessage(j, nft.signature.signature)
 
   let verified = true
   if (currentNftOwnerAddress !== signatureAddress) {

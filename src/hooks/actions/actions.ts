@@ -51,7 +51,7 @@ export function useSubscribe(options?: UseSubscribeOptions): UseSubscribeResult 
   const subscribe = async () => {
     try {
       await accountsActions.subscribe(subplebbitAddress, accountName)
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       onError?.(e)
     }
@@ -60,7 +60,7 @@ export function useSubscribe(options?: UseSubscribeOptions): UseSubscribeResult 
   const unsubscribe = async () => {
     try {
       await accountsActions.unsubscribe(subplebbitAddress, accountName)
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       onError?.(e)
     }
@@ -109,7 +109,7 @@ export function useBlock(options?: UseBlockOptions): UseBlockResult {
       } else {
         await accountsActions.blockAddress(address, accountName)
       }
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       onError?.(e)
     }
@@ -122,7 +122,7 @@ export function useBlock(options?: UseBlockOptions): UseBlockResult {
       } else {
         await accountsActions.unblockAddress(address, accountName)
       }
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       onError?.(e)
     }
@@ -194,7 +194,7 @@ export function usePublishComment(options?: UsePublishCommentOptions): UsePublis
     try {
       const {index} = await accountsActions.publishComment(publishCommentOptions, accountName)
       setIndex(index)
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       publishCommentOptions.onError?.(e)
     }
@@ -266,7 +266,7 @@ export function usePublishVote(options?: UsePublishVoteOptions): UsePublishVoteR
   const publishVote = async () => {
     try {
       await accountsActions.publishVote(publishVoteOptions, accountName)
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       publishVoteOptions.onError?.(e)
     }
@@ -337,7 +337,7 @@ export function usePublishCommentEdit(options?: UsePublishCommentEditOptions): U
   const publishCommentEdit = async () => {
     try {
       await accountsActions.publishCommentEdit(publishCommentEditOptions, accountName)
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       publishCommentEditOptions.onError?.(e)
     }
@@ -408,7 +408,7 @@ export function usePublishSubplebbitEdit(options?: UsePublishSubplebbitEditOptio
   const publishSubplebbitEdit = async () => {
     try {
       await accountsActions.publishSubplebbitEdit(subplebbitAddress, publishSubplebbitEditOptions, accountName)
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       publishSubplebbitEditOptions.onError?.(e)
     }
@@ -449,7 +449,7 @@ export function useCreateSubplebbit(options?: UseCreateSubplebbitOptions): UseCr
       const createdSubplebbit = await accountsActions.createSubplebbit(createSubplebbitOptions, accountName)
       setCreatedSubplebbit(createdSubplebbit)
       setState('succeeded')
-    } catch (e: any) {
+    } catch (e) {
       setErrors((errors) => [...errors, e])
       setState('failed')
       onError?.(e)

@@ -160,7 +160,7 @@ describe('subplebbits', () => {
     test('has error events', async () => {
       // mock update to save subplebbit instance
       const subplebbitUpdate = Subplebbit.prototype.update
-      const updatingSubplebbits: any = []
+      const updatingSubplebbits: Subplebbit[] = []
       Subplebbit.prototype.update = function () {
         updatingSubplebbits.push(this)
         return subplebbitUpdate.bind(this)()

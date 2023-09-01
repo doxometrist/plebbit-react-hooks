@@ -24,7 +24,7 @@ import localForage from 'localforage'
 import {getCommentCidsToAccountsComments} from './utils'
 
 // reset all event listeners in between tests
-export const listeners: any = []
+export const listeners: Subplebbit[] = []
 
 type AccountsState = {
   accounts: Accounts
@@ -127,7 +127,7 @@ const initializeAccountsStore = async () => {
 
 // TODO: find way to test started subplebbits
 // poll all local subplebbits and start them if they are not started
-let startSubplebbitsInterval: any
+let startSubplebbitsInterval: NodeJS.Timeout
 let startedSubplebbits: {[subplebbitAddress: string]: Subplebbit} = {}
 let pendingStartedSubplebbits: {[subplebbitAddress: string]: boolean} = {}
 const initializeStartSubplebbits = async () => {

@@ -31,9 +31,9 @@ export function useSubplebbit(options?: UseSubplebbitOptions): UseSubplebbitResu
   assert(!options || typeof options === 'object', `useSubplebbit options argument '${options}' not an object`)
   const {subplebbitAddress, accountName} = options || {}
   const account = useAccount({accountName})
-  const subplebbit = useSubplebbitsStore((state: any) => state.subplebbits[subplebbitAddress || ''])
-  const addSubplebbitToStore = useSubplebbitsStore((state: any) => state.addSubplebbitToStore)
-  const errors = useSubplebbitsStore((state: any) => state.errors[subplebbitAddress || ''])
+  const subplebbit = useSubplebbitsStore((state) => state.subplebbits[subplebbitAddress || ''])
+  const addSubplebbitToStore = useSubplebbitsStore((state) => state.addSubplebbitToStore)
+  const errors = useSubplebbitsStore((state) => state.errors[subplebbitAddress || ''])
 
   useEffect(() => {
     if (!subplebbitAddress || !account) {
@@ -123,10 +123,10 @@ export function useSubplebbits(options?: UseSubplebbitsOptions): UseSubplebbitsR
   const {subplebbitAddresses, accountName} = options || {}
   const account = useAccount({accountName})
   const subplebbits: (Subplebbit | undefined)[] = useSubplebbitsStore(
-    (state: any) => (subplebbitAddresses || []).map((subplebbitAddress) => state.subplebbits[subplebbitAddress || '']),
+    (state) => (subplebbitAddresses || []).map((subplebbitAddress) => state.subplebbits[subplebbitAddress || '']),
     shallow
   )
-  const addSubplebbitToStore = useSubplebbitsStore((state: any) => state.addSubplebbitToStore)
+  const addSubplebbitToStore = useSubplebbitsStore((state) => state.addSubplebbitToStore)
 
   useEffect(() => {
     if (!subplebbitAddresses || !account) {
@@ -265,7 +265,7 @@ export function useResolvedSubplebbitAddress(options?: UseResolvedSubplebbitAddr
           if (res !== resolvedAddress) {
             setResolvedAddress(res)
           }
-        } catch (error: any) {
+        } catch (error) {
           setErrors([...errors, error])
           setState('failed')
           setResolvedAddress(undefined)

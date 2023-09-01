@@ -298,7 +298,7 @@ describe('authors comments store', () => {
     expect(bufferedComments[2 * commentsPerPage + 1].cid).toBe('previous from last comment cid 39')
 
     // discover older lastCommentCid, should do nothing because not new
-    commentsStore.setState((state: any) => {
+    commentsStore.setState((state) => {
       const commentCid = 'previous comment cid 100'
       const comment = {...state.comments[commentCid]}
       comment.author.subplebbit = {lastCommentCid: 'previous comment cid 3'}
@@ -352,7 +352,7 @@ describe('authors comments store', () => {
     expect(bufferedComments[4 * commentsPerPage + 1].cid).toBe('previous comment cid 44')
 
     // discover a second lastCommentCid
-    commentsStore.setState((state: any) => {
+    commentsStore.setState((state) => {
       const commentCid = 'comment cid'
       const comment = {...state.comments[commentCid]}
       comment.author.subplebbit = {lastCommentCid: 'subplebbit last comment cid 2'}
@@ -471,7 +471,7 @@ describe('authors comments store', () => {
     expect(rendered.result.current.loadedComments[differentAuthorAddressName].length).toBe(commentsPerPage)
 
     // discover a lastCommentCid
-    commentsStore.setState((state: any) => {
+    commentsStore.setState((state) => {
       const commentCid = 'different author comment cid 20'
       const comment = {...state.comments[commentCid]}
       comment.author.subplebbit = {lastCommentCid: 'different author comment cid ' + differentAuthorTotalCommentCountFromLastCid}
@@ -560,7 +560,7 @@ describe('authors comments store', () => {
       // discover a lastCommentCid on a random comment (or first comment)
       const randomCommentIndexWithLastCommentCid = Math.floor(Math.random() * totalAuthorCommentCount + 1)
       const commentCidWithLastCommentCid = getAccountCommentCid(startCid, randomCommentIndexWithLastCommentCid)
-      commentsStore.setState((state: any) => {
+      commentsStore.setState((state) => {
         // use startCid as fallback in case the random comment hasn't been fetched yet
         let comment = state.comments[commentCidWithLastCommentCid] || state.comments[startCid]
         comment = {...comment}

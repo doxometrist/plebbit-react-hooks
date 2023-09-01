@@ -1,8 +1,18 @@
+interface Post {
+  upvoteCount: number
+  timestamp: number
+  downvoteCount: number
+  subplebbitAddress: string
+  cid: string
+  lastReplyTimestamp: number
+  pinned: boolean
+}
+
 /**
  * Sort by top is made using relative score, to encourage small communities to grow
  * and to not incentivize communities to inflate their vote counts
  */
-const sortByTop = (feed: any[]) => {
+const sortByTop = (feed: Post[]) => {
   const subplebbitScores: {[key: string]: number} = {}
   const postScores: {[key: string]: number} = {}
   const postRelativeScores: {[key: string]: number} = {}
@@ -30,7 +40,7 @@ const sortByTop = (feed: any[]) => {
  * Sort by controversial is made using relative score, to encourage small communities to grow
  * and to not incentivize communities to inflate their vote counts
  */
-const sortByControversial = (feed: any[]) => {
+const sortByControversial = (feed: Post[]) => {
   const subplebbitScores: {[key: string]: number} = {}
   const postScores: {[key: string]: number} = {}
   const postRelativeScores: {[key: string]: number} = {}
@@ -38,7 +48,7 @@ const sortByControversial = (feed: any[]) => {
     const upvoteCount = post.upvoteCount || 0
     const downvoteCount = post.downvoteCount || 0
     const magnitude = upvoteCount + downvoteCount
-    const balance = upvoteCount > downvoteCount ? parseFloat(downvoteCount) / upvoteCount : parseFloat(upvoteCount) / downvoteCount
+    const balance = upvoteCount > downvoteCount ? downvoteCount / upvoteCount : upvoteCount / downvoteCount
     const score = Math.pow(magnitude, balance)
     if (!subplebbitScores[post.subplebbitAddress]) {
       subplebbitScores[post.subplebbitAddress] = 0
@@ -57,13 +67,12 @@ const sortByControversial = (feed: any[]) => {
     .sort((a, b) => (b.upvoteCount || 0) - (a.upvoteCount || 0))
     .sort((a, b) => (postRelativeScores[b.cid] || 0) - (postRelativeScores[a.cid] || 0))
 }
-
 /**
  * Sort by hot is made using relative score, to encourage small communities to grow
  * and to not incentivize communities to inflate their vote counts
  * Note: a sub with not many posts will be given very high priority
  */
-const sortByHot = (feed: any[]) => {
+const sortByHot = (feed: Post[]) => {
   const subplebbitScores: {[key: string]: number} = {}
   const postScores: {[key: string]: number} = {}
   const postRelativeScores: {[key: string]: number} = {}
@@ -99,7 +108,7 @@ const sortByHot = (feed: any[]) => {
  * Sort by new is made using relative timestamp score, to encourage small communities to grow
  * and to not incentivize communities to inflate their timestamp
  */
-const sortByNew = (feed: any[]) => {
+const sortByNew = (feed: Post[]) => {
   const subplebbitScores: {[key: string]: number} = {}
   const postScores: {[key: string]: number} = {}
   const postRelativeScores: {[key: string]: number} = {}
@@ -127,7 +136,7 @@ const sortByNew = (feed: any[]) => {
  * Sort by active is made using relative lastReplyTimestamp score, to encourage small communities to grow
  * and to not incentivize communities to inflate their lastReplyTimestamp
  */
-const sortByActive = (feed: any[]) => {
+const sortByActive = (feed: Post[]) => {
   const subplebbitScores: {[key: string]: number} = {}
   const postScores: {[key: string]: number} = {}
   const postRelativeScores: {[key: string]: number} = {}
@@ -151,7 +160,7 @@ const sortByActive = (feed: any[]) => {
     .sort((a, b) => (postRelativeScores[b.cid] || 0) - (postRelativeScores[a.cid] || 0))
 }
 
-export const sort = (sortType: string, feed: any[]) => {
+export const sort = (sortType: string, feed: Post[]) => {
   // pinned posts are not sorted, maybe in a future version we can sort them based on something
   const pinnedPosts = feed.filter((post) => post.pinned)
 

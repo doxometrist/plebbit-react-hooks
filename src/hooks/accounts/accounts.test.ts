@@ -1,27 +1,28 @@
-import {act, renderHook} from '@testing-library/react-hooks'
-import testUtils from '../../lib/test-utils'
+import {RenderHookResult, act, renderHook} from '@testing-library/react-hooks'
 import {
+  UseAccountCommentsOptions,
+  UseAccountResult,
+  setPlebbitJs,
   useAccount,
-  useAccounts,
   useAccountComment,
   useAccountComments,
-  useAccountVotes,
-  useAccountVote,
   useAccountEdits,
-  useEditedComment,
   useAccountSubplebbits,
-  UseAccountCommentsOptions,
+  useAccountVote,
+  useAccountVotes,
+  useAccounts,
   useComment,
-  useNotifications,
+  useEditedComment,
   useFeed,
-  useSubplebbit,
+  useNotifications,
   usePubsubSubscribe,
-  setPlebbitJs,
+  useSubplebbit,
 } from '../..'
-import commentsStore from '../../stores/comments'
-import * as accountsActions from '../../stores/accounts/accounts-actions'
-import PlebbitJsMock, {Plebbit, Comment, Subplebbit, Pages, resetPlebbitJsMock, debugPlebbitJsMock} from '../../lib/plebbit-js/plebbit-js-mock'
+import PlebbitJsMock, {Comment, Pages, Plebbit, Subplebbit, resetPlebbitJsMock} from '../../lib/plebbit-js/plebbit-js-mock'
+import testUtils from '../../lib/test-utils'
 import accountsStore from '../../stores/accounts'
+import * as accountsActions from '../../stores/accounts/accounts-actions'
+import commentsStore from '../../stores/comments'
 setPlebbitJs(PlebbitJsMock)
 
 describe('accounts', () => {
@@ -44,7 +45,7 @@ describe('accounts', () => {
 
       // on second render, you get the default generated account
       await waitFor(() => rendered.result.current.name)
-      const account = rendered.result.current
+      const account: UseAccountResult = rendered.result.current
       expect(account.name).toBe('Account 1')
       expect(account.author.displayName).toBe(undefined)
       expect(typeof account.author.address).toBe('string')
@@ -61,7 +62,7 @@ describe('accounts', () => {
 
     test(`default plebbit options are not saved to database`, async () => {
       const plebbitOptions = {ipfsHttpClientsOptions: ['http://one:5001/api/v0']}
-      // @ts-ignore
+      //@ts-ignore
       window.defaultPlebbitOptions = plebbitOptions
 
       // re-init accounts after changing plebbit defaults
@@ -419,8 +420,12 @@ describe('accounts', () => {
         let exported: any
         await act(async () => {
           try {
-            exported = JSON.parse(await rendered.result.current.exportAccount())
-          } catch (e) {}
+            const exportedAccount = await rendered.result.current.exportAccount()
+            exported = JSON.parse(exportedAccount)
+          } catch (e) {
+            // Log the error for debugging purposes
+            console.error('Error exporting the account:', e)
+          }
         })
         expect(typeof exported?.account?.id).toBe('string')
         expect(typeof exported?.account?.signer?.privateKey).toBe('string')
@@ -1058,11 +1063,11 @@ describe('accounts', () => {
   })
 
   describe('multiple comments and votes in database', () => {
-    let onChallenge: any
-    let onChallengeVerification: any
+    let onChallenge: jest.Mock<any, any>
+    let onChallengeVerification: jest.Mock<any, any>
     let publishOptions: any
-    let rendered: any
-    let waitFor: any
+    let rendered: RenderHookResult<any, any, Renderer<any>>
+    let waitFor: (waitForFunction: Function) => Promise<void>
 
     beforeEach(async () => {
       onChallenge = jest.fn()

@@ -1,5 +1,9 @@
 // Note: the commented out types are TODO functionalities to implement
 
+import {Plebbit} from '@plebbit/plebbit-js/dist/node/plebbit'
+import {PlebbitOptions} from '@plebbit/plebbit-js/dist/node/types'
+import {Signer} from 'ethers'
+
 /**
  * Public interface
  */
@@ -121,6 +125,7 @@ export interface UseCommentsResult extends Result {
 export interface UseEditedCommentOptions extends Options {
   comment?: Comment
 }
+// todo have a CommentEdit interface?
 export interface UseEditedCommentResult extends Result {
   // editedComment only contains the succeeded and pending props, failed props aren't added
   editedComment: Comment | undefined
@@ -371,7 +376,7 @@ export interface UseSubscribeOptions extends Options {
   authorAddress?: string
 }
 export interface UseSubscribeResult extends Result {
-  subscribed: boolean | undefined
+  subscribed?: boolean
   subscribe(): Promise<void>
   unsubscribe(): Promise<void>
 }
@@ -437,20 +442,24 @@ export interface UseBlockResult extends Result {
  * https://github.com/plebbit/plebbit-react-hooks/blob/master/docs/schema.md
  */
 export type Account = {[key: string]: any}
+
 export type AccountsActions = {[key: string]: any}
 export type PublishCommentOptions = {[key: string]: any}
 export type PublishVoteOptions = {[key: string]: any}
 export type PublishCommentEditOptions = {[key: string]: any}
+
 export type PublishSubplebbitEditOptions = {[key: string]: any}
 export type Challenge = {[key: string]: any}
 export type ChallengeVerification = {[key: string]: any}
 export type CreateCommentOptions = {[key: string]: any}
 export type CreateSubplebbitOptions = {[key: string]: any}
+
 export type CreateVoteOptions = {[key: string]: any}
 export type Comment = {[key: string]: any}
 export type Vote = {[key: string]: any}
 export type CommentEdit = {[key: string]: any}
 export type SubplebbitEdit = {[key: string]: any}
+
 export type Subplebbit = {[key: string]: any}
 export type SubplebbitStats = {[key: string]: any}
 export type Notification = {[key: string]: any}

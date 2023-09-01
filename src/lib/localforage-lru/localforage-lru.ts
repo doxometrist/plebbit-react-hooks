@@ -1,13 +1,18 @@
 import localForage from 'localforage'
 
-function createLocalForageInstance(localForageLruOptions: any): any {
+export interface LocalForageInstanceProps<T> {
+  name: string
+  size?: number
+}
+
+function createLocalForageInstance<T>(localForageLruOptions: LocalForageInstanceProps<T>) {
   if (typeof localForageLruOptions?.size !== 'number') {
     throw Error(`LocalForageLru.createInstance localForageLruOptions.size '${localForageLruOptions?.size}' not a number`)
   }
   const localForageOptions = {...localForageLruOptions}
   delete localForageOptions.size
-  let database1: any,
-    database2: any,
+  let database1: LocalForage,
+    database2: LocalForage,
     databaseSize: number,
     initialized = false
 
@@ -46,13 +51,13 @@ function createLocalForageInstance(localForageLruOptions: any): any {
         return returnValue
       }
     },
-    setItem: async function (key: string, value: any) {
+    setItem: async function (key: string, value: T) {
       await initialization()
       const databaseValue = await database1.getItem(key)
       if (databaseValue !== null && databaseValue !== undefined) {
         try {
           await database1.setItem(key, value)
-        } catch (error: any) {
+        } catch (error) {
           console.error('localforageLru.setItem setItem error', {error, errorMessage: error?.message, key, value})
           throw error
         }
@@ -82,10 +87,10 @@ function createLocalForageInstance(localForageLruOptions: any): any {
     },
   }
 
-  async function updateDatabases(key: string, value: any) {
+  async function updateDatabases<T>(key: string, value: T) {
     try {
       await database1.setItem(key, value)
-    } catch (error: any) {
+    } catch (error) {
       console.error('localforageLru updateDatabases setItem error', {error, errorMessage: error?.message, key, value})
 
       // ignore this error, don't know why it happens
@@ -95,7 +100,7 @@ function createLocalForageInstance(localForageLruOptions: any): any {
       throw error
     }
     databaseSize++
-    if (databaseSize >= localForageLruOptions.size) {
+    if (localForageLruOptions.size && databaseSize >= localForageLruOptions.size) {
       databaseSize = 0
       const database1Temp = database1
       const database2Temp = database2
@@ -112,9 +117,9 @@ function createLocalForageInstance(localForageLruOptions: any): any {
   }
 }
 
-const instances: any = {}
+const instances: Record<string, LocalForage> = {}
 
-const createInstance = (localForageLruOptions: any) => {
+const createInstance = <T>(localForageLruOptions: LocalForageInstanceProps<T>) => {
   if (typeof localForageLruOptions?.name !== 'string') {
     throw Error(`LocalForageLru.createInstance localForageLruOptions.name '${localForageLruOptions?.name}' not a string`)
   }

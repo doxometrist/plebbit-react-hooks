@@ -147,7 +147,7 @@ describe('comments', () => {
         updatedAt: Math.round(Date.now() / 1000) + 60, // 1 minute in the future to make sure it's more recent
       }
       act(() => {
-        subplebbitsPagesStore.setState((state: any) => ({comments: {'comment cid 1': subplebbitsPagesComment}}))
+        subplebbitsPagesStore.setState((state) => ({comments: {'comment cid 1': subplebbitsPagesComment}}))
       })
 
       // using the subplebbit page comment
@@ -176,7 +176,7 @@ describe('comments', () => {
       // mock getting a subplebbit page with an updated comment
       const subplebbitsPagesComment = {...rendered.result.current.comments[1], replyCount: 100, updatedAt: Math.round(Date.now() / 1000) + 60}
       act(() => {
-        subplebbitsPagesStore.setState((state: any) => ({comments: {'comment cid 2': subplebbitsPagesComment}}))
+        subplebbitsPagesStore.setState((state) => ({comments: {'comment cid 2': subplebbitsPagesComment}}))
       })
 
       // using the subplebbit page comment
@@ -202,7 +202,7 @@ describe('comments', () => {
     test('has error events', async () => {
       // mock update to save comment instance
       const commentUpdate = Comment.prototype.update
-      const updatingComments: any = []
+      const updatingComments: Comment[] = []
       Comment.prototype.update = function () {
         updatingComments.push(this)
         return commentUpdate.bind(this)()

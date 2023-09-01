@@ -1,12 +1,12 @@
 // NOTE: don't import plebbit-js directly to be able to replace the implementation
 
-import PlebbitJsMockContent from './plebbit-js-mock-content'
-import Logger from '@plebbit/plebbit-logger'
 import Plebbit from '@plebbit/plebbit-js'
+import Logger from '@plebbit/plebbit-logger'
 import assert from 'assert'
+import PlebbitJsMockContent from './plebbit-js-mock-content'
 const log = Logger('plebbit-react-hooks:plebbit-js')
 
-const PlebbitJs: any = {
+const PlebbitJs: Record<string, typeof Plebbit> = {
   Plebbit: Plebbit,
 }
 
@@ -16,7 +16,7 @@ const PlebbitJs: any = {
  * for developing the front-end or to add a PlebbitJs with
  * desktop privileges in the Electron build.
  */
-export function setPlebbitJs(_Plebbit: any) {
+export function setPlebbitJs(_Plebbit) {
   assert(typeof _Plebbit === 'function', `setPlebbitJs invalid Plebbit argument '${_Plebbit}' not a function`)
   PlebbitJs.Plebbit = _Plebbit
   log('setPlebbitJs', _Plebbit?.name)

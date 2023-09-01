@@ -12,7 +12,7 @@ import assert from 'assert'
 const subplebbitsPagesDatabase = localForageLru.createInstance({name: 'subplebbitsPages', size: 500})
 
 // reset all event listeners in between tests
-export const listeners: any = []
+export const listeners: Subplebbit[] = []
 
 export type SubplebbitsPagesState = {
   subplebbitsPages: SubplebbitsPages
@@ -83,7 +83,7 @@ const subplebbitsPagesStore = createStore<SubplebbitsPagesState>((setState: Func
     const flattenedComments = utils.flattenCommentsPages(page)
     const {comments} = getState()
     let hasNewComments = false
-    const newComments: Comments = {}
+    const newComments: Comments[] = []
     for (const comment of flattenedComments) {
       if (comment.cid && (comment.updatedAt || 0) > (comments[comment.cid]?.updatedAt || 0)) {
         // don't clone the comment to save memory, comments remain a pointer to the page object
@@ -186,7 +186,7 @@ const fetchPage = async (pageCid: string, subplebbitAddress: string, account: Ac
   // set clients states on subplebbits store so the frontend can display it
   subplebbitPostsClientsOnStateChange(subplebbit?.posts?.clients, onSubplebbitPostsClientsStateChange(subplebbit))
 
-  const onError = (error: any) => log.error(`subplebbitsPagesStore subplebbit '${subplebbitAddress}' failed subplebbit.posts.getPage page cid '${pageCid}':`, error)
+  const onError = (error) => log.error(`subplebbitsPagesStore subplebbit '${subplebbitAddress}' failed subplebbit.posts.getPage page cid '${pageCid}':`, error)
   const fetchedSubplebbitPage = await utils.retryInfinity(() => subplebbit.posts.getPage(pageCid), {onError})
   await subplebbitsPagesDatabase.setItem(pageCid, utils.clone(fetchedSubplebbitPage))
   return fetchedSubplebbitPage
@@ -241,7 +241,7 @@ const originalState = subplebbitsPagesStore.getState()
 export const resetSubplebbitsPagesStore = async () => {
   fetchPagePending = {}
   // remove all event listeners
-  listeners.forEach((listener: any) => listener.removeAllListeners())
+  listeners.forEach((listener) => listener.removeAllListeners())
   // destroy all component subscriptions to the store
   subplebbitsPagesStore.destroy()
   // restore original state
