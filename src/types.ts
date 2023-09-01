@@ -485,6 +485,7 @@ export type AccountsActions = {[key: string]: any}
 export type PublishCommentOptions = {[key: string]: any}
 export type PublishVoteOptions = {[key: string]: any}
 export type PublishCommentEditOptions = {[key: string]: any}
+
 export type PublishSubplebbitEditOptions = {[key: string]: any}
 
 // todo uncertain here

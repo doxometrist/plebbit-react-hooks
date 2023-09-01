@@ -84,8 +84,7 @@ const subplebbitsPagesStore = createStore<SubplebbitsPagesState>((setState: Func
     const flattenedComments: Comment[] = utils.flattenCommentsPages(page)
     const {comments} = getState()
     let hasNewComments = false
-    // todo not sure what is the data structure intended here
-    const newComments = []
+    const newComments: Comments[] = []
     for (const comment of flattenedComments) {
       if (comment.cid && (comment.updatedAt || 0) > (comments[comment.cid]?.updatedAt || 0)) {
         // don't clone the comment to save memory, comments remain a pointer to the page object
