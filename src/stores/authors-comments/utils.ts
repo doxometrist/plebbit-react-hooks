@@ -69,6 +69,28 @@ const commentsHaveChanged = (comments1: Comment[], comments2: Comment[]) => {
   return false
 }
 
+export const filterAuthorComments = (authorComments: Comment[], filter: AuthorCommentsFilter) => {
+  assert(
+    !filter.subplebbitAddresses || Array.isArray(filter.subplebbitAddresses),
+    `authorsCommentsStore filterAuthorComments invalid argument filter.subplebbitAddresses '${filter.subplebbitAddresses}' not an array`
+  )
+  const filtered: Comment[] = []
+  for (const authorComment of authorComments) {
+    let isFilteredOut = false
+    if (filter.subplebbitAddresses?.length && !filter.subplebbitAddresses.includes(authorComment.subplebbitAddress)) {
+      isFilteredOut = true
+    }
+    if (typeof filter.hasParentCid === 'boolean' && filter.hasParentCid !== Boolean(authorComment.parentCid)) {
+      isFilteredOut = true
+    }
+    if (!isFilteredOut) {
+      filtered.push(authorComment)
+    } else {
+    }
+  }
+  return filtered
+}
+
 // if comment already exist, find the actual nextCidToFetch
 // can happen if a more recent lastCommentCid becomes nextCommentCidToFetch
 export const getNextCommentCidToFetchNotFetched = (nextCommentCidToFetch: string | undefined) => {
