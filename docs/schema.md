@@ -27,6 +27,7 @@ Account {
   unreadNotificationCount: number
   subplebbits: {[subplebbitAddress: string]: AccountSubplebbit} // the subplebbits moderated or created by the user
 }
+
 Karma {
   replyUpvoteCount
   replyDownvoteCount
@@ -38,22 +39,30 @@ Karma {
   downvoteCount
   score
 }
+
 AccountSubplebbit { // the subplebbits moderated or created by the user
   role: Role
   autoStart: boolean // default true, the subplebbit should start publishing (subplebbit.start()) when the app is launched
 }
+
+is there
 AccountComment extends Comment {
   index: number // the index of the comment in the AccountComments array and database
   accountId: string
   upvoteCountMarkedAsRead: number // upvote count the last time the user read it, needed for upvote notifications
 }
+
 AccountCommentReply extends Comment {
   markedAsRead: boolean // has the user read this reply, needed for reply notifications
 }
+
+<!-- todo not present -->
 UseAccountsCommentsOptions {
   accountName?: string
   filter: UseAccountCommentsFilter
 }
+
+<!-- todo not present -->
 UseAccountCommentsFilter { // only get your own account's comments/votes on a certain subplebbit, thread, etc useful for certain UI pages
   subplebbitAddresses?: string[]
   postCids?: string[]
@@ -61,17 +70,25 @@ UseAccountCommentsFilter { // only get your own account's comments/votes on a ce
   parentCommentCids?: string[]
   hasParentCommentCid?: boolean // get only posts, no comments
 }
+
+is there
 AccountVote extends Vote {
   previousAccountVoteCid: string // needed to scroll to every vote an account has published
 }
+
+is there
 Author {
   displayName: string
   address: string
 }
+
+  <!-- todo not present -->
 Signer {
   privateKey?: string | buffer
   type: 'rsa'
 }
+
+is there
 Challenge {
   type: 'image' | 'text' | 'audio' | 'video' | 'html' // tells the client how to display the challenge, start with implementing image and text only first
   challenge: string // data required to complete the challenge, could be html, png, etc.
