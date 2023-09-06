@@ -485,7 +485,6 @@ export type AccountsActions = {[key: string]: any}
 export type PublishCommentOptions = {[key: string]: any}
 export type PublishVoteOptions = {[key: string]: any}
 export type PublishCommentEditOptions = {[key: string]: any}
-
 export type PublishSubplebbitEditOptions = {[key: string]: any}
 
 // todo uncertain here
@@ -526,11 +525,10 @@ export interface Signature {
 export interface Comment extends Publication /* (IPFS file) */ {
   cid?: string // client id of the comment
   postCid?: string // helps faster loading post info for reply direct linking, added by the subplebbit owner not author
-  parentCid?: string // same as postCid for top level comments
-  content?: string
   previousCid?: string // each post is a linked list
   depth?: number // 0 = post, 1 = top level reply, 2+ = nested reply, added by the subplebbit owner not author
   ipnsName?: string // each post/comment needs its own IPNS record (CommentUpdate) for its mutable data like edits, vote counts, comments
+  parentCid?: string // same as postCid for top level comments
   spoiler?: boolean
   flair?: Flair // arbitrary colored string added by the author or mods to describe the author or comment
 }
