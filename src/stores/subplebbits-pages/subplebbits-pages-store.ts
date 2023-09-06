@@ -12,7 +12,7 @@ import assert from 'assert'
 const subplebbitsPagesDatabase = localForageLru.createInstance({name: 'subplebbitsPages', size: 500})
 
 // reset all event listeners in between tests
-export const listeners: Subplebbit[] = []
+export const listeners: EventListener[] = []
 
 export type SubplebbitsPagesState = {
   subplebbitsPages: SubplebbitsPages
@@ -83,7 +83,8 @@ const subplebbitsPagesStore = createStore<SubplebbitsPagesState>((setState: Func
     const flattenedComments = utils.flattenCommentsPages(page)
     const {comments} = getState()
     let hasNewComments = false
-    const newComments: Comments[] = []
+    // todo not sure what is the data structure intended here
+    const newComments = []
     for (const comment of flattenedComments) {
       if (comment.cid && (comment.updatedAt || 0) > (comments[comment.cid]?.updatedAt || 0)) {
         // don't clone the comment to save memory, comments remain a pointer to the page object
@@ -161,6 +162,7 @@ const onSubplebbitPostsClientsStateChange = (subplebbit: Subplebbit) => (clientS
     },
   }))
 }
+
 const subplebbitPostsClientsOnStateChange = (clients: any, onStateChange: Function) => {
   for (const sortType in clients?.ipfsGateways) {
     for (const clientUrl in clients?.ipfsGateways?.[sortType]) {
@@ -241,7 +243,7 @@ const originalState = subplebbitsPagesStore.getState()
 export const resetSubplebbitsPagesStore = async () => {
   fetchPagePending = {}
   // remove all event listeners
-  listeners.forEach((listener) => listener.removeAllListeners())
+  listeners.forEach((listener: EventListener) => listener.removeAllListeners())
   // destroy all component subscriptions to the store
   subplebbitsPagesStore.destroy()
   // restore original state

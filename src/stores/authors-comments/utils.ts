@@ -74,7 +74,7 @@ export const filterAuthorComments = (authorComments: Comment[], filter: AuthorCo
     !filter.subplebbitAddresses || Array.isArray(filter.subplebbitAddresses),
     `authorsCommentsStore filterAuthorComments invalid argument filter.subplebbitAddresses '${filter.subplebbitAddresses}' not an array`
   )
-  const filtered = []
+  const filtered: Comment[] = []
   for (const authorComment of authorComments) {
     let isFilteredOut = false
     if (filter.subplebbitAddresses?.length && !filter.subplebbitAddresses.includes(authorComment.subplebbitAddress)) {

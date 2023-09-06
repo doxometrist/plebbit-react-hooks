@@ -170,13 +170,13 @@ const feedsStore = createStore<FeedsState>((setState: Function, getState: Functi
   },
 }))
 
-let previousBlockedAddresses: string[] = []
+let previousBlockedAddresses: {[address: string]: boolean}[] = []
 let previousAccountsBlockedAddresses: {[address: string]: boolean}[] = []
 const updateFeedsOnAccountsBlockedAddressesChange = (accountsStoreState: any) => {
   const {accounts} = accountsStoreState
 
   // blocked addresses haven't changed, do nothing
-  const accountsBlockedAddresses = []
+  const accountsBlockedAddresses: {[address: string]: boolean}[] = []
   for (const i in accounts) {
     accountsBlockedAddresses.push(accounts[i].blockedAddresses)
   }
@@ -206,6 +206,7 @@ const updateFeedsOnAccountsBlockedAddressesChange = (accountsStoreState: any) =>
 }
 
 let previousBlockedCids: string[] = []
+// todo unkonown what to do here
 let previousAccountsBlockedCids: {[cid: string]: boolean}[] = []
 const updateFeedsOnAccountsBlockedCidsChange = (accountsStoreState: any) => {
   const {accounts} = accountsStoreState

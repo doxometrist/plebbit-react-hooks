@@ -87,7 +87,7 @@ export const generateDefaultAccount = async () => {
 
 const getNextAvailableDefaultAccountName = async () => {
   const accountIds: string[] | null = await accountsDatabase.accountsMetadataDatabase.getItem('accountIds')
-  const accountNames = []
+  const accountNames: string[] = []
   if (accountIds?.length) {
     const accounts: Accounts | null = await accountsDatabase.getAccounts(accountIds)
     for (const accountId of accountIds) {

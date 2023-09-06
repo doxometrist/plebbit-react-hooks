@@ -71,8 +71,8 @@ const sortTypes = [
 ]
 
 // this function should not clone the comments to not waste memory
-export const flattenCommentsPages = (pageInstanceOrPagesInstance: any) => {
-  const flattenedComments = []
+export const flattenCommentsPages = (pageInstanceOrPagesInstance: any): Comment[] => {
+  const flattenedComments: Comment[] = []
 
   // if is a Page instance
   for (const comment of pageInstanceOrPagesInstance?.comments || []) {

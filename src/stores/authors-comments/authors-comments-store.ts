@@ -354,7 +354,7 @@ const setLastCommentCidOnCommentsChange = (options: AuthorCommentsOptions, comme
   }
 
   // is last comment cid, set it
-  log(`authorsCommentsStore setLastCommentCidOnCommentsChange`, {lastCommentCid: comment.cid, lastComment: comment, currentLastComment, bufferedComments})
+  log(`authorsCommentsStore setLastCommentCidOnCommentsChange`, {lastCommentCid: comment.postCid, lastComment: comment, currentLastComment, bufferedComments})
   setLastCommentCid(options.authorAddress, commentCid)
   // add the last comment to loadedComments
   updateLoadedComments()

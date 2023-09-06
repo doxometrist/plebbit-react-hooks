@@ -35,6 +35,7 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
 
     // try to find comment in database
     comment = await getCommentFromDatabase(commentCid, account)
+    // todo local type incompatible with plebbit-js type
 
     // comment not in database, fetch from plebbit-js
     try {
@@ -51,6 +52,7 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
     }
 
     // the comment is still missing up to date mutable data like upvotes, edits, replies, etc
+    // todo so it's also a listener, not just an interface?
     comment?.on('update', async (updatedComment: Comment) => {
       updatedComment = utils.clone(updatedComment)
       await commentsDatabase.setItem(commentCid, updatedComment)
