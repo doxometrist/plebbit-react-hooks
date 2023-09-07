@@ -301,7 +301,7 @@ describe('authors comments store', () => {
     commentsStore.setState((state) => {
       const commentCid = 'previous comment cid 100'
       const comment = {...state.comments[commentCid]}
-      comment.author.subplebbit = {lastCommentCid: 'previous comment cid 3'}
+      comment.author.subplebbit ? (comment.author.subplebbit.lastCommentCid = 'previous comment cid 3') : {}
       return {comments: {...state.comments, [commentCid]: comment}}
     })
 
@@ -355,7 +355,7 @@ describe('authors comments store', () => {
     commentsStore.setState((state) => {
       const commentCid = 'comment cid'
       const comment = {...state.comments[commentCid]}
-      comment.author.subplebbit = {lastCommentCid: 'subplebbit last comment cid 2'}
+      comment.author.subplebbit ? (comment.author.subplebbit.lastCommentCid = 'subplebbit last comment cid 2') : {}
       return {comments: {...state.comments, [commentCid]: comment}}
     })
 
@@ -474,7 +474,7 @@ describe('authors comments store', () => {
     commentsStore.setState((state) => {
       const commentCid = 'different author comment cid 20'
       const comment = {...state.comments[commentCid]}
-      comment.author.subplebbit = {lastCommentCid: 'different author comment cid ' + differentAuthorTotalCommentCountFromLastCid}
+      comment.author.subplebbit ? (comment.author.subplebbit.lastCommentCid = 'different author comment cid ' + differentAuthorTotalCommentCountFromLastCid) : {}
       return {comments: {...state.comments, [commentCid]: comment}}
     })
 
@@ -564,8 +564,12 @@ describe('authors comments store', () => {
         // use startCid as fallback in case the random comment hasn't been fetched yet
         let comment = state.comments[commentCidWithLastCommentCid] || state.comments[startCid]
         comment = {...comment}
-        comment.author.subplebbit = {lastCommentCid: getAccountCommentCid(startCid, totalAuthorCommentCount + totalAuthorCommentCountFromLastCommentCid)}
-        return {comments: {...state.comments, [comment.cid]: comment}}
+        const lastCommentCid = getAccountCommentCid(startCid, totalAuthorCommentCount + totalAuthorCommentCountFromLastCommentCid)
+        comment.author.subplebbit ? (comment.author.subplebbit.lastCommentCid = lastCommentCid) : {}
+        if (comment.cid) {
+          return {comments: {...state.comments, [comment.cid]: comment}}
+        }
+        return {comments: {...state.comments}}
       })
 
       // scroll all pages

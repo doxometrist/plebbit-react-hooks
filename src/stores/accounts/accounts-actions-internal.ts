@@ -27,7 +27,7 @@ export const startUpdatingAccountCommentOnCommentUpdateEvents = async (comment: 
     comment = await utils.retryInfinity(() => account.plebbit.getComment(comment.cid, {onError}))
   }
   // account comment already updating
-  if (accountsStore.getState().accountsCommentsUpdating[comment.cid]) {
+  if (comment.cid && accountsStore.getState().accountsCommentsUpdating[comment.cid]) {
     return
   }
   accountsStore.setState(({accountsCommentsUpdating}) => ({accountsCommentsUpdating: {...accountsCommentsUpdating, [comment.cid]: true}}))
@@ -94,7 +94,7 @@ export const startUpdatingAccountCommentOnCommentUpdateEvents = async (comment: 
         }
 
         // add all to database
-        const promises = []
+        const promises: Promise<any>[] = []
         for (const replyCid in updatedAccountCommentsReplies) {
           promises.push(accountsDatabase.addAccountCommentReply(account.id, updatedAccountCommentsReplies[replyCid]))
         }
@@ -199,7 +199,7 @@ export const markNotificationsAsRead = async (account: Account) => {
   }
 
   // add all to database
-  const promises = []
+  const promises: Promise<any>[] = []
   for (const replyCid in repliesToMarkAsRead) {
     promises.push(accountsDatabase.addAccountCommentReply(account.id, repliesToMarkAsRead[replyCid]))
   }

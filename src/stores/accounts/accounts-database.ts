@@ -14,7 +14,7 @@ const log = Logger('plebbit-react-hooks:accounts:stores')
 const getAccounts = async (accountIds: string[]) => {
   validator.validateAccountsDatabaseGetAccountsArguments(accountIds)
   const accounts: Accounts = {}
-  const promises = []
+  const promises: Promise<any>[] = []
   for (const accountId of accountIds) {
     promises.push(accountsDatabase.getItem(accountId))
   }
@@ -61,7 +61,7 @@ const getExportedAccountJson = async (accountId: string) => {
 // databases formed like an array (keys are numbers)
 const getDatabaseAsArray = async (database: any) => {
   const length = (await database.getItem('length')) || 0
-  let promises = []
+  let promises: Promise<any>[] = []
   let i = 0
   while (i < length) {
     promises.push(database.getItem(String(i++)))
@@ -170,7 +170,7 @@ const getAccountCommentsDatabase = (accountId: string) => {
 
 const addAccountComment = async (accountId: string, comment: CreateCommentOptions | Comment, accountCommentIndex?: number) => {
   const accountCommentsDatabase = getAccountCommentsDatabase(accountId)
-  const length = (await accountCommentsDatabase.getItem('length')) || 0
+  const length = ((await accountCommentsDatabase.getItem('length')) as number) || 0
   comment = utils.clone({...comment, signer: undefined})
   if (typeof accountCommentIndex === 'number') {
     assert(accountCommentIndex < length, `addAccountComment cannot edit comment no comment in database at accountCommentIndex '${accountCommentIndex}'`)
@@ -182,11 +182,11 @@ const addAccountComment = async (accountId: string, comment: CreateCommentOption
 
 const getAccountComments = async (accountId: string) => {
   const accountCommentsDatabase = getAccountCommentsDatabase(accountId)
-  const length = (await accountCommentsDatabase.getItem('length')) || 0
+  const length = ((await accountCommentsDatabase.getItem('length')) as number) || 0
   if (length === 0) {
     return []
   }
-  let promises = []
+  let promises: Promise<any>[] = []
   let i = 0
   while (i < length) {
     promises.push(accountCommentsDatabase.getItem(String(i++)))
@@ -202,7 +202,7 @@ const getAccountComments = async (accountId: string) => {
 
 const getAccountsComments = async (accountIds: string[]) => {
   assert(Array.isArray(accountIds), `getAccountsComments invalid accountIds '${accountIds}' not an array`)
-  const promises = []
+  const promises: Promise<any>[] = []
   for (const accountId of accountIds) {
     promises.push(getAccountComments(accountId))
   }
@@ -253,7 +253,7 @@ const getAccountVotes = async (accountId: string) => {
   if (length === 0) {
     return votes
   }
-  let promises = []
+  let promises: Promise<any>[] = []
   let i = 0
   while (i < length) {
     promises.push(accountVotesDatabase.getItem(String(i++)))
@@ -267,7 +267,7 @@ const getAccountVotes = async (accountId: string) => {
 
 const getAccountsVotes = async (accountIds: string[]) => {
   assert(Array.isArray(accountIds), `getAccountsVotes invalid accountIds '${accountIds}' not an array`)
-  const promises = []
+  const promises: Promise<any>[] = []
   for (const accountId of accountIds) {
     promises.push(getAccountVotes(accountId))
   }
@@ -299,14 +299,13 @@ const addAccountCommentReply = async (accountId: string, reply: AccountCommentRe
 const getAccountCommentsReplies = async (accountId: string) => {
   const accountCommentsRepliesDatabase = getAccountCommentsRepliesDatabase(accountId)
   const replyCids = await accountCommentsRepliesDatabase.keys()
-  const promises = []
+  const promises: Promise<any>[] = []
   for (const replyCid of replyCids) {
     promises.push(accountCommentsRepliesDatabase.getItem(replyCid))
   }
   const replyArray = await Promise.all(promises)
   const replies = {}
   for (const reply of replyArray) {
-    // @ts-ignore
     replies[reply.cid] = reply
   }
   return replies
@@ -314,7 +313,7 @@ const getAccountCommentsReplies = async (accountId: string) => {
 
 const getAccountsCommentsReplies = async (accountIds: string[]) => {
   assert(Array.isArray(accountIds), `getAccountsCommentsReplies invalid accountIds '${accountIds}' not an array`)
-  const promises = []
+  const promises: Promise<any>[] = []
   for (const accountId of accountIds) {
     promises.push(getAccountCommentsReplies(accountId))
   }
@@ -370,7 +369,7 @@ const getAccountEdits = async (accountId: string) => {
   if (length === 0) {
     return edits
   }
-  let promises = []
+  let promises: Promise<any>[] = []
   let i = 0
   while (i < length) {
     promises.push(accountEditsDatabase.getItem(String(i++)))
@@ -388,7 +387,7 @@ const getAccountEdits = async (accountId: string) => {
 
 const getAccountsEdits = async (accountIds: string[]) => {
   assert(Array.isArray(accountIds), `getAccountsEdits invalid accountIds '${accountIds}' not an array`)
-  const promises = []
+  const promises: Promise<any>[] = []
   for (const accountId of accountIds) {
     promises.push(getAccountEdits(accountId))
   }

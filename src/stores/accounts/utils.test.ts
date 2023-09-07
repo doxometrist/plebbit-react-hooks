@@ -1,14 +1,38 @@
 import utils from './utils'
-import {Role} from '../../types'
+import {Account, Author, Role} from '../../types'
 
 describe('accountsStore utils', () => {
-  const author = {address: 'author address'}
+  const author: Author = {
+    address: 'author address',
+    shortAddress: '',
+  }
   const adminRole: Role = {role: 'admin'}
   const moderatorRole: Role = {role: 'moderator'}
 
   describe('getAccountSubplebbits', () => {
     test('empty', async () => {
-      const account = {author}
+      const account: Account = {
+        author,
+        id: '',
+        name: '',
+        signer: undefined,
+        plebbit: new Plebbit(),
+        plebbitOptions: undefined,
+        subscriptions: [],
+        multisubSubscriptions: [],
+        authorSubscriptions: [],
+        notifyingSubplebbits: {},
+        notifyingMultisubs: {},
+        notifyingAuthors: {},
+        notifyingComments: {},
+        blockedAddresses: {},
+        blockedCids: {},
+        limitedAddresses: {},
+        savedComments: [],
+        karma: undefined,
+        unreadNotificationCount: 0,
+        subplebbits: {},
+      }
       const subplebbits = {}
       const accountSubplebbits = utils.getAccountSubplebbits(account, subplebbits)
       expect(accountSubplebbits).toEqual({})

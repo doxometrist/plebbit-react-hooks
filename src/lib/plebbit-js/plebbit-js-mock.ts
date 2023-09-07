@@ -280,7 +280,6 @@ export class Subplebbit extends EventEmitter {
     // do subplebbit.edit
     for (const prop in editSubplebbitOptions) {
       if (editSubplebbitOptions[prop]) {
-        // @ts-ignore
         this[prop] = editSubplebbitOptions[prop]
       }
     }
@@ -508,7 +507,13 @@ export class CommentEdit extends Publication {}
 
 export class SubplebbitEdit extends Publication {}
 
-const createPlebbit: any = async (...args: any) => {
+type PlebbitMockFactory = {
+  (...args: any): Promise<Plebbit>
+  getShortAddress?: (address: string) => string
+  getShortCid?: (cid: string) => string
+}
+
+const createPlebbit: PlebbitMockFactory = async (...args: any) => {
   return new Plebbit(...args)
 }
 

@@ -12,7 +12,6 @@ import type {
   AccountCommentReply,
 } from '../../types'
 import {useMemo, useState, useEffect} from 'react'
-// @ts-ignore
 import memoize from 'memoizee'
 import utils from '../../lib/utils'
 import PlebbitJs from '../../lib/plebbit-js'

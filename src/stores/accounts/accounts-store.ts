@@ -73,7 +73,7 @@ const initializeAccountsStore = async () => {
   }
   // no accounts in database, create a default account
   else {
-    const defaultAccount = await accountGenerator.generateDefaultAccount()
+    const defaultAccount: Account = await accountGenerator.generateDefaultAccount()
     await accountsDatabase.addAccount(defaultAccount)
     accounts = {[defaultAccount.id]: defaultAccount}
     ;[accountIds, activeAccountId, accountNamesToAccountIds] = await Promise.all<any>([

@@ -3,6 +3,7 @@
 import {Plebbit} from '@plebbit/plebbit-js/dist/node/plebbit'
 import {PlebbitOptions} from '@plebbit/plebbit-js/dist/node/types'
 import {Signer} from 'ethers'
+import EventEmitter from 'events'
 
 /**
  * Public interface
@@ -505,7 +506,7 @@ export type CreateSubplebbitOptions = {title: string}
 export type CreateVoteOptions = {commentCid: string; timestamp: number}
 
 // todo publication based stuff
-export interface Publication {
+export interface Publication extends EventEmitter {
   author: Author
   subplebbitAddress: string // all publications are directed to a subplebbit owner
   timestamp: number // number in seconds
@@ -521,12 +522,13 @@ export interface Signature {
 }
 
 export interface Comment extends Publication /* (IPFS file) */ {
+  cid?: string // client id of the comment
   postCid?: string // helps faster loading post info for reply direct linking, added by the subplebbit owner not author
   parentCid?: string // same as postCid for top level comments
-  content: string
-  previousCid: string // each post is a linked list
-  depth: number // 0 = post, 1 = top level reply, 2+ = nested reply, added by the subplebbit owner not author
-  ipnsName: string // each post/comment needs its own IPNS record (CommentUpdate) for its mutable data like edits, vote counts, comments
+  content?: string
+  previousCid?: string // each post is a linked list
+  depth?: number // 0 = post, 1 = top level reply, 2+ = nested reply, added by the subplebbit owner not author
+  ipnsName?: string // each post/comment needs its own IPNS record (CommentUpdate) for its mutable data like edits, vote counts, comments
   spoiler?: boolean
   flair?: Flair // arbitrary colored string added by the author or mods to describe the author or comment
 }
@@ -553,7 +555,7 @@ export type Subplebbit /* (IPNS record Subplebbit.address) */ = {
   address: string // validate subplebbit address in signature to prevent a crypto domain resolving to an impersonated subplebbit
   title?: string
   description?: string
-  roles?: {[authorAddress: string]: SubplebbitRole} // each author address can be mapped to 1 SubplebbitRole
+  roles: {[authorAddress: string]: SubplebbitRole} // each author address can be mapped to 1 SubplebbitRole
   pubsubTopic?: string // the string to publish to in the pubsub, a public key of the subplebbit owner's choice
   lastPostCid?: string // the most recent post in the linked list of posts
   posts?: Pages // only preload page 1 sorted by 'hot', might preload more later, comments should include Comment + CommentUpdate data
@@ -608,9 +610,10 @@ export interface SubplebbitRole {
 }
 
 // todo there is subplebbit pages
+// the keys must be of PostsSortType | RepliesSortType | ModSortType
 export interface Pages {
-  pages: {[key: PostsSortType | RepliesSortType]: SubplebbitPage} // e.g. subplebbit.posts.pages.hot.comments[0].cid = '12D3KooW...'
-  pageCids: {[key: PostsSortType | RepliesSortType | ModSortType]: string} // e.g. subplebbit.posts.pageCids.topAll = '12D3KooW...'
+  pages: {[key: string]: SubplebbitPage} // e.g. subplebbit.posts.pages.hot.comments[0].cid = '12D3KooW...'
+  pageCids: {[key: string]: string} // e.g. subplebbit.posts.pageCids.topAll = '12D3KooW...'
 }
 
 export type PostsSortType =

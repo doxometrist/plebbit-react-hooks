@@ -8,11 +8,12 @@ import subplebbitsStore, {SubplebbitsState} from '../subplebbits'
 import localForageLru from '../../lib/localforage-lru'
 import createStore from 'zustand'
 import assert from 'assert'
+import {EventEmitter} from 'stream'
 
 const subplebbitsPagesDatabase = localForageLru.createInstance({name: 'subplebbitsPages', size: 500})
 
 // reset all event listeners in between tests
-export const listeners: EventListener[] = []
+export const emitters: EventEmitter[] = []
 
 export type SubplebbitsPagesState = {
   subplebbitsPages: SubplebbitsPages
@@ -80,7 +81,7 @@ const subplebbitsPagesStore = createStore<SubplebbitsPagesState>((setState: Func
     }
 
     // find new comments in the page
-    const flattenedComments = utils.flattenCommentsPages(page)
+    const flattenedComments: Comment[] = utils.flattenCommentsPages(page)
     const {comments} = getState()
     let hasNewComments = false
     // todo not sure what is the data structure intended here
@@ -243,7 +244,7 @@ const originalState = subplebbitsPagesStore.getState()
 export const resetSubplebbitsPagesStore = async () => {
   fetchPagePending = {}
   // remove all event listeners
-  listeners.forEach((listener: EventListener) => listener.removeAllListeners())
+  emitters.forEach((emitter) => emitter.removeAllListeners())
   // destroy all component subscriptions to the store
   subplebbitsPagesStore.destroy()
   // restore original state

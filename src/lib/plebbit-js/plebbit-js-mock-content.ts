@@ -167,7 +167,11 @@ const authorFlairs = [
   {
     text: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
   },
-  {text: 'Probably a scammer', textColor: '#FFFFFF', backgroundColor: '#5B3A29'},
+  {
+    text: 'Probably a scammer',
+    textColor: '#FFFFFF',
+    backgroundColor: '#5B3A29',
+  },
   {text: 'loser', textColor: '#000000', backgroundColor: '#4A192C'},
   {text: 'WINNER', backgroundColor: '#F8F32B'},
   {text: 'IMPORTANT VIP!!!', backgroundColor: '#C35831'},
@@ -374,8 +378,7 @@ const getPostContent = async (seed: string) => {
           postContent.linkWidth = 852
           postContent.linkHeight = 480
         }
-      }
-      // if link is image, add width and height
+      } // if link is image, add width and height
       else {
         const [, linkWidth, linkHeight] = (postContent.link.match(/\d+\/\d+\/\d+/)?.[0] || '').split('/')
         postContent.linkWidth = Number(linkWidth)
@@ -386,8 +389,7 @@ const getPostContent = async (seed: string) => {
     if (!linkIsImage && hasThumbnail) {
       postContent.thumbnailUrl = await getImageUrl(postNumberSeed.increment())
     }
-  }
-  // else is text post
+  } // else is text post
   else {
     postContent.content = await getArrayItem(commentContents, postNumberSeed.increment())
     const hasQuote = await getArrayItem([true, false, false, false], postNumberSeed.increment())
@@ -474,14 +476,30 @@ const getSubplebbitContent = async (seed: string) => {
   const hasRoles = await getArrayItem([true, false], subplebbitNumberSeed.increment())
   if (hasRoles) {
     subplebbit.roles = {
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'owner'},
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'admin'},
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'moderator'},
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'moderator'},
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'moderator'},
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'moderator'},
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'moderator'},
-      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {role: 'moderator'},
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'owner',
+      },
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'admin',
+      },
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'moderator',
+      },
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'moderator',
+      },
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'moderator',
+      },
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'moderator',
+      },
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'moderator',
+      },
+      [await getAuthorAddress(subplebbitNumberSeed.increment())]: {
+        role: 'moderator',
+      },
     }
   }
 
@@ -595,8 +613,14 @@ const getCommentUpdateContent = async (comment: any) => {
   }
 
   // simulate finding replies from IPNS record
-  commentUpdateContent.replies = {pages: {topAll: {nextCid: undefined, comments: []}}}
-  const getReplyContentOptions = {depth: comment.depth + 1, parentCid: comment.cid, postCid: comment.cid}
+  commentUpdateContent.replies = {
+    pages: {topAll: {nextCid: undefined, comments: []}},
+  }
+  const getReplyContentOptions = {
+    depth: comment.depth + 1,
+    parentCid: comment.cid,
+    postCid: comment.cid,
+  }
   let replyCount = commentUpdateContent.replyCount
   const replyCids: any = new Set()
   while (replyCount-- > 0) {
@@ -616,7 +640,10 @@ const getCommentUpdateContent = async (comment: any) => {
     }
     replyCids.add(reply.cid)
     const replyUpdateContent = await getCommentUpdateContent(reply)
-    commentUpdateContent.replies.pages.topAll.comments.push({...reply, ...replyUpdateContent})
+    commentUpdateContent.replies.pages.topAll.comments.push({
+      ...reply,
+      ...replyUpdateContent,
+    })
   }
 
   const rareTrue = [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
@@ -825,12 +852,18 @@ class Plebbit extends EventEmitter {
 class Pages {
   pageCids: any = {}
   pages: any = {}
-  subplebbit: any
-  comment: any
+  subplebbit: Subplebbit
+  comment: Comment
 
   constructor(pagesOptions?: any) {
-    Object.defineProperty(this, 'subplebbit', {value: pagesOptions?.subplebbit, enumerable: false})
-    Object.defineProperty(this, 'comment', {value: pagesOptions?.comment, enumerable: false})
+    Object.defineProperty(this, 'subplebbit', {
+      value: pagesOptions?.subplebbit,
+      enumerable: false,
+    })
+    Object.defineProperty(this, 'comment', {
+      value: pagesOptions?.comment,
+      enumerable: false,
+    })
   }
 
   async getPage(pageCid: string) {
@@ -898,7 +931,10 @@ class Subplebbit extends EventEmitter {
     }
     this.shortAddress = this.address?.endsWith('.eth') ? this.address : this.address?.substring(8, 20)
 
-    Object.defineProperty(this, 'updating', {enumerable: false, writable: true})
+    Object.defineProperty(this, 'updating', {
+      enumerable: false,
+      writable: true,
+    })
     // @ts-ignore
     this.updating = false
 
@@ -982,8 +1018,14 @@ class Publication extends EventEmitter {
 
   constructor() {
     super()
-    Object.defineProperty(this, 'challengeRequestId', {enumerable: false, writable: true})
-    Object.defineProperty(this, 'challengeAnswerId', {enumerable: false, writable: true})
+    Object.defineProperty(this, 'challengeRequestId', {
+      enumerable: false,
+      writable: true,
+    })
+    Object.defineProperty(this, 'challengeAnswerId', {
+      enumerable: false,
+      writable: true,
+    })
     // @ts-ignore
     this.challengeRequestId = `r${++challengeRequestCount}`
     // @ts-ignore
@@ -1085,7 +1127,10 @@ class Comment extends Publication {
       this.shortCid = this.cid.substring(2, 14)
     }
 
-    Object.defineProperty(this, 'updating', {enumerable: false, writable: true})
+    Object.defineProperty(this, 'updating', {
+      enumerable: false,
+      writable: true,
+    })
     // @ts-ignore
     this.updating = false
 
@@ -1173,7 +1218,6 @@ export class CommentEdit extends Publication {
   constructor(publishCommentEditOptions: any) {
     super()
     for (const prop in publishCommentEditOptions) {
-      // @ts-ignore
       this[prop] = publishCommentEditOptions[prop]
     }
   }
@@ -1181,7 +1225,7 @@ export class CommentEdit extends Publication {
 
 export class SubplebbitEdit extends Publication {}
 
-const createPlebbit: any = async (...args: any) => {
+const createPlebbit = async (...args: any): Promise<Plebbit> => {
   return new Plebbit(...args)
 }
 

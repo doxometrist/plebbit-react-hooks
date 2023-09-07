@@ -1,18 +1,19 @@
 import assert from 'assert'
 import {
-  Feed,
-  Feeds,
-  FeedOptions,
-  FeedsOptions,
-  Subplebbit,
-  Subplebbits,
   Account,
   Accounts,
-  SubplebbitPage,
-  SubplebbitsPages,
+  Comment,
+  Feed,
+  FeedOptions,
+  Feeds,
+  FeedsOptions,
   FeedsSubplebbitsPostCounts,
+  Subplebbit,
+  SubplebbitPage,
+  Subplebbits,
+  SubplebbitsPages,
 } from '../../types'
-import {getSubplebbitPages, getSubplebbitFirstPageCid} from '../subplebbits-pages'
+import {getSubplebbitFirstPageCid, getSubplebbitPages} from '../subplebbits-pages'
 import feedSorter from './feed-sorter'
 
 /**
@@ -25,71 +26,14 @@ export const getBufferedFeeds = (feedsOptions: FeedsOptions, loadedFeeds: Feeds,
   for (const feedName in loadedFeeds) {
     loadedFeedsPosts[feedName] = new Set()
     for (const post of loadedFeeds[feedName]) {
-      loadedFeedsPosts[feedName].add(post.cid)
+      post.cid && loadedFeedsPosts[feedName].add(post.cid)
     }
   }
 
   // calculate each feed
   let newBufferedFeeds: Feeds = {}
   for (const feedName in feedsOptions) {
-    const {subplebbitAddresses, sortType, accountId} = feedsOptions[feedName]
-
-    // find all fetched posts
-    const bufferedFeedPosts = []
-
-    // add each comment from each page, do not filter at this stage, filter after sorting
-    for (const subplebbitAddress of subplebbitAddresses) {
-      // subplebbit hasn't loaded yet
-      if (!subplebbits[subplebbitAddress]) {
-        continue
-      }
-
-      // use subplebbit preloaded posts if any
-      const preloadedPosts = subplebbits[subplebbitAddress].posts?.pages?.[sortType]?.comments
-      if (preloadedPosts) {
-        bufferedFeedPosts.push(...preloadedPosts)
-      }
-
-      // add all posts from subplebbit pages
-      const subplebbitPages = getSubplebbitPages(subplebbits[subplebbitAddress], sortType, subplebbitsPages)
-      for (const subplebbitPage of subplebbitPages) {
-        if (subplebbitPage?.comments) {
-          bufferedFeedPosts.push(...subplebbitPage.comments)
-        }
-      }
-    }
-
-    // sort the feed before filtering to get more accurate results
-    const sortedBufferedFeedPosts = feedSorter.sort(sortType, bufferedFeedPosts)
-
-    // filter the feed
-    const filteredSortedBufferedFeedPosts = []
-    for (const post of sortedBufferedFeedPosts) {
-      // don't add posts already loaded in loaded feeds
-      if (loadedFeedsPosts[feedName]?.has(post.cid)) {
-        continue
-      }
-
-      // address is blocked
-      if (accounts[accountId].blockedAddresses[post.subplebbitAddress] || (post.author?.address && accounts[accountId].blockedAddresses[post.author.address])) {
-        continue
-      }
-
-      // comment cid is blocked
-      if (accounts[accountId].blockedCids[post.cid]) {
-        continue
-      }
-
-      // if a feed has more than 1 sub, don't include pinned posts
-      // TODO: add test to check if pinned are filtered
-      if (post.pinned && subplebbitAddresses.length > 1) {
-        continue
-      }
-
-      filteredSortedBufferedFeedPosts.push(post)
-    }
-
-    newBufferedFeeds[feedName] = filteredSortedBufferedFeedPosts
+    newBufferedFeeds[feedName] = getOneFeed(feedsOptions, feedName, subplebbits, subplebbitsPages, loadedFeedsPosts, accounts)
   }
   return newBufferedFeeds
 }
@@ -134,7 +78,7 @@ export const getBufferedFeedsWithoutLoadedFeeds = (bufferedFeeds: Feeds, loadedF
   for (const feedName in loadedFeeds) {
     loadedFeedsPosts[feedName] = new Set()
     for (const post of loadedFeeds[feedName]) {
-      loadedFeedsPosts[feedName].add(post.cid)
+      post.cid && loadedFeedsPosts[feedName].add(post.cid)
     }
   }
 
@@ -142,7 +86,7 @@ export const getBufferedFeedsWithoutLoadedFeeds = (bufferedFeeds: Feeds, loadedF
   for (const feedName in bufferedFeeds) {
     newBufferedFeeds[feedName] = []
     for (const post of bufferedFeeds[feedName]) {
-      if (loadedFeedsPosts[feedName]?.has(post.cid)) {
+      if (post.cid && loadedFeedsPosts[feedName]?.has(post.cid)) {
         continue
       }
       newBufferedFeeds[feedName].push(post)
@@ -334,7 +278,12 @@ export const accountsBlockedAddressesChanged = (
   return false
 }
 
-export const feedsHaveChangedBlockedAddresses = (feedsOptions: FeedsOptions, bufferedFeeds: Feeds, blockedAddresses: string[], previousBlockedAddresses: string[]) => {
+export const feedsHaveChangedBlockedAddresses = (
+  feedsOptions: FeedsOptions,
+  bufferedFeeds: Feeds,
+  blockedAddresses: string[],
+  previousBlockedAddresses: {[address: string]: boolean}[]
+) => {
   // find the difference between current and previous blocked addresses
   const changedBlockedAddresses = blockedAddresses
     .filter((x) => !previousBlockedAddresses.includes(x))
@@ -407,4 +356,89 @@ export const feedsHaveChangedBlockedCids = (feedsOptions: FeedsOptions, buffered
   }
 
   return false
+}
+
+function getOneFeed(
+  feedsOptions: FeedsOptions,
+  feedName: string,
+  subplebbits: Subplebbits,
+  subplebbitsPages: SubplebbitsPages,
+  loadedFeedsPosts: {[feedName: string]: Set<string>},
+  accounts: Accounts
+): Feed {
+  const {subplebbitAddresses, sortType, accountId} = feedsOptions[feedName]
+
+  // find all fetched posts
+  const bufferedFeedPosts: Comment[] = fetchBufferedPosts(subplebbitAddresses, subplebbits, sortType, subplebbitsPages)
+
+  // sort the feed before filtering to get more accurate results
+  const sortedBufferedFeedPosts = feedSorter.sort(sortType, bufferedFeedPosts)
+
+  // filter the feed
+  const filteredPosts = filterPosts(sortedBufferedFeedPosts, loadedFeedsPosts, feedName, accounts, accountId, subplebbitAddresses)
+  return filteredPosts
+}
+
+function fetchBufferedPosts(subplebbitAddresses: string[], subplebbits: Subplebbits, sortType: string, subplebbitsPages: SubplebbitsPages): Comment[] {
+  const bufferedFeedPosts: Comment[] = []
+
+  // add each comment from each page, do not filter at this stage, filter after sorting
+  for (const subplebbitAddress of subplebbitAddresses) {
+    // subplebbit hasn't loaded yet
+    if (!subplebbits[subplebbitAddress]) {
+      continue
+    }
+
+    // use subplebbit preloaded posts if any
+    const preloadedPosts: Comment[] | undefined = subplebbits[subplebbitAddress].posts?.pages?.[sortType]?.comments
+    if (preloadedPosts) {
+      bufferedFeedPosts.push(...preloadedPosts)
+    }
+
+    // add all posts from subplebbit pages
+    const subplebbitPages = getSubplebbitPages(subplebbits[subplebbitAddress], sortType, subplebbitsPages)
+    for (const subplebbitPage of subplebbitPages) {
+      if (subplebbitPage?.comments) {
+        bufferedFeedPosts.push(...subplebbitPage.comments)
+      }
+    }
+  }
+  return bufferedFeedPosts
+}
+
+function filterPosts(
+  sortedBufferedFeedPosts: Post[],
+  loadedFeedsPosts: {[feedName: string]: Set<string>},
+  feedName: string,
+  accounts: Accounts,
+  accountId: string,
+  subplebbitAddresses: string[]
+): Comment[] {
+  const filteredSortedBufferedFeedPosts: Comment[] = []
+  for (const post of sortedBufferedFeedPosts) {
+    // don't add posts already loaded in loaded feeds
+    if (loadedFeedsPosts[feedName]?.has(post.cid)) {
+      continue
+    }
+
+    // address is blocked
+    if (accounts[accountId].blockedAddresses[post.subplebbitAddress] || (post.author?.address && accounts[accountId].blockedAddresses[post.author.address])) {
+      continue
+    }
+
+    // comment cid is blocked
+    if (accounts[accountId].blockedCids[post.cid]) {
+      continue
+    }
+
+    // if a feed has more than 1 sub, don't include pinned posts
+    // TODO: add test to check if pinned are filtered
+    if (post.pinned && subplebbitAddresses.length > 1) {
+      continue
+    }
+
+    filteredSortedBufferedFeedPosts.push(post)
+  }
+
+  return filteredSortedBufferedFeedPosts
 }

@@ -1,6 +1,7 @@
+import Logger from '@plebbit/plebbit-logger'
 import assert from 'assert'
 import QuickLru from 'quick-lru'
-import Logger from '@plebbit/plebbit-logger'
+import {Comment} from '../../types'
 const log = Logger('plebbit-react-hooks:utils')
 
 const merge = (...args: any) => {
@@ -99,17 +100,18 @@ export const flattenCommentsPages = (pageInstanceOrPagesInstance: any): Comment[
   }
 
   // remove duplicate comments
-  const flattenedCommentsObject = {}
-  for (const comment of flattenedComments) {
-    // @ts-ignore
-    flattenedCommentsObject[comment.cid] = comment
-  }
-  const uniqueFlattened = []
-  for (const cid in flattenedCommentsObject) {
-    // @ts-ignore
-    uniqueFlattened.push(flattenedCommentsObject[cid])
-  }
-  return uniqueFlattened
+
+  let uniqueIds = new Set()
+  const uniqueArray: Comment[] = flattenedComments.filter((item) => {
+    if (uniqueIds.has(item.cid)) {
+      return false
+    } else {
+      uniqueIds.add(item.cid)
+      return true
+    }
+  })
+
+  return uniqueArray
 }
 
 export const memo = (functionToMemo: Function, memoOptions: any) => {

@@ -10,19 +10,19 @@ import assert from 'assert'
 const log = Logger('plebbit-react-hooks:accounts:stores')
 import {
   Account,
+  AccountComment,
   Accounts,
-  PublishCommentOptions,
   Challenge,
   ChallengeVerification,
-  PublishVoteOptions,
-  PublishCommentEditOptions,
-  PublishSubplebbitEditOptions,
   CreateSubplebbitOptions,
+  PublishCommentEditOptions,
+  PublishCommentOptions,
+  PublishSubplebbitEditOptions,
+  PublishVoteOptions,
   Subplebbits,
-  AccountComment,
 } from '../../types'
 import * as accountsActionsInternal from './accounts-actions-internal'
-import {getAccountSubplebbits, getCommentCidsToAccountsComments, fetchCommentLinkDimensions} from './utils'
+import {fetchCommentLinkDimensions, getAccountSubplebbits, getCommentCidsToAccountsComments} from './utils'
 import utils from '../../lib/utils'
 
 const addNewAccountToDatabaseAndState = async (newAccount: Account) => {
@@ -44,7 +44,10 @@ const addNewAccountToDatabaseAndState = async (newAccount: Account) => {
     accountsComments: {...accountsComments, [newAccount.id]: []},
     accountsVotes: {...accountsVotes, [newAccount.id]: {}},
     accountsEdits: {...accountsEdits, [newAccount.id]: {}},
-    accountsCommentsReplies: {...accountsCommentsReplies, [newAccount.id]: {}},
+    accountsCommentsReplies: {
+      ...accountsCommentsReplies,
+      [newAccount.id]: {},
+    },
   }
   // if there is only 1 account, make it active
   // otherwise stay on the same active account
@@ -54,7 +57,7 @@ const addNewAccountToDatabaseAndState = async (newAccount: Account) => {
   accountsStore.setState(newState)
 }
 
-export const createAccount = async (accountName?: string) => {
+export const createAccount = async (accountName?: string): Promise<void> => {
   const newAccount = await accountGenerator.generateDefaultAccount()
   if (accountName) {
     newAccount.name = accountName
@@ -126,14 +129,17 @@ export const setAccount = async (account: Account) => {
   ])
   const newAccounts: Accounts = {...accounts, [newAccount.id]: newAccount}
   log('accountsActions.setAccount', {account: newAccount})
-  accountsStore.setState({accounts: newAccounts, accountNamesToAccountIds: newAccountNamesToAccountIds})
+  accountsStore.setState({
+    accounts: newAccounts,
+    accountNamesToAccountIds: newAccountNamesToAccountIds,
+  })
 }
 
 export const setAccountsOrder = async (newOrderedAccountNames: string[]) => {
   const {accounts, accountNamesToAccountIds} = accountsStore.getState()
   assert(accounts && accountNamesToAccountIds, `can't use accountsStore.accountActions before initialized`)
-  const accountIds = []
-  const accountNames = []
+  const accountIds: string[] = []
+  const accountNames: string[] = []
   for (const accountName of newOrderedAccountNames) {
     const accountId = accountNamesToAccountIds[accountName]
     accountIds.push(accountId)
@@ -173,7 +179,12 @@ export const importAccount = async (serializedAccount: string) => {
   const generatedAccount = await accountGenerator.generateDefaultAccount()
   // use generatedAccount to init properties like .plebbit and .id on a new account
   // overwrite account.id to avoid duplicate ids
-  const newAccount = {...generatedAccount, ...imported.account, subplebbits, id: generatedAccount.id}
+  const newAccount = {
+    ...generatedAccount,
+    ...imported.account,
+    subplebbits,
+    id: generatedAccount.id,
+  }
 
   // add account to database
   await accountsDatabase.addAccount(newAccount)
@@ -204,15 +215,29 @@ export const importAccount = async (serializedAccount: string) => {
     accounts: {...state.accounts, [newAccount.id]: newAccount},
     accountIds,
     accountNamesToAccountIds: newAccountNamesToAccountIds,
-    accountsComments: {...state.accountsComments, [newAccount.id]: accountComments},
-    commentCidsToAccountsComments: getCommentCidsToAccountsComments({...state.accountsComments, [newAccount.id]: accountComments}),
+    accountsComments: {
+      ...state.accountsComments,
+      [newAccount.id]: accountComments,
+    },
+    commentCidsToAccountsComments: getCommentCidsToAccountsComments({
+      ...state.accountsComments,
+      [newAccount.id]: accountComments,
+    }),
     accountsVotes: {...state.accountsVotes, [newAccount.id]: accountVotes},
     accountsEdits: {...state.accountsEdits, [newAccount.id]: accountEdits},
     // don't import/export replies to own comments, those are just cached and can be refetched
-    accountsCommentsReplies: {...state.accountsCommentsReplies, [newAccount.id]: {}},
+    accountsCommentsReplies: {
+      ...state.accountsCommentsReplies,
+      [newAccount.id]: {},
+    },
   }))
 
-  log('accountsActions.importAccount', {account: newAccount, accountComments, accountVotes, accountEdits})
+  log('accountsActions.importAccount', {
+    account: newAccount,
+    accountComments,
+    accountVotes,
+    accountEdits,
+  })
 
   // start looking for updates for all accounts comments in database
   for (const accountComment of accountComments) {
@@ -267,7 +292,11 @@ export const subscribe = async (subplebbitAddress: string, accountName?: string)
   // update account in db
   await accountsDatabase.addAccount(updatedAccount)
   const updatedAccounts = {...accounts, [updatedAccount.id]: updatedAccount}
-  log('accountsActions.subscribe', {account: updatedAccount, accountName, subplebbitAddress})
+  log('accountsActions.subscribe', {
+    account: updatedAccount,
+    accountName,
+    subplebbitAddress,
+  })
   accountsStore.setState({accounts: updatedAccounts})
 }
 
@@ -293,7 +322,11 @@ export const unsubscribe = async (subplebbitAddress: string, accountName?: strin
   // update account in db
   await accountsDatabase.addAccount(updatedAccount)
   const updatedAccounts = {...accounts, [updatedAccount.id]: updatedAccount}
-  log('accountsActions.unsubscribe', {account: updatedAccount, accountName, subplebbitAddress})
+  log('accountsActions.unsubscribe', {
+    account: updatedAccount,
+    accountName,
+    subplebbitAddress,
+  })
   accountsStore.setState({accounts: updatedAccounts})
 }
 
@@ -308,7 +341,9 @@ export const blockAddress = async (address: string, accountName?: string) => {
   }
   assert(account?.id, `accountsActions.blockAddress account.id '${account?.id}' doesn't exist, activeAccountId '${activeAccountId}' accountName '${accountName}'`)
 
-  const blockedAddresses: {[address: string]: boolean} = {...account.blockedAddresses}
+  const blockedAddresses: {[address: string]: boolean} = {
+    ...account.blockedAddresses,
+  }
   if (blockedAddresses[address] === true) {
     throw Error(`account '${account.id}' already blocked address '${address}'`)
   }
@@ -318,7 +353,11 @@ export const blockAddress = async (address: string, accountName?: string) => {
   // update account in db
   await accountsDatabase.addAccount(updatedAccount)
   const updatedAccounts = {...accounts, [updatedAccount.id]: updatedAccount}
-  log('accountsActions.blockAddress', {account: updatedAccount, accountName, address})
+  log('accountsActions.blockAddress', {
+    account: updatedAccount,
+    accountName,
+    address,
+  })
   accountsStore.setState({accounts: updatedAccounts})
 }
 
@@ -333,7 +372,9 @@ export const unblockAddress = async (address: string, accountName?: string) => {
   }
   assert(account?.id, `accountsActions.unblockAddress account.id '${account?.id}' doesn't exist, activeAccountId '${activeAccountId}' accountName '${accountName}'`)
 
-  const blockedAddresses: {[address: string]: boolean} = {...account.blockedAddresses}
+  const blockedAddresses: {[address: string]: boolean} = {
+    ...account.blockedAddresses,
+  }
   if (!blockedAddresses[address]) {
     throw Error(`account '${account.id}' already unblocked address '${address}'`)
   }
@@ -343,7 +384,11 @@ export const unblockAddress = async (address: string, accountName?: string) => {
   // update account in db
   await accountsDatabase.addAccount(updatedAccount)
   const updatedAccounts = {...accounts, [updatedAccount.id]: updatedAccount}
-  log('accountsActions.unblockAddress', {account: updatedAccount, accountName, address})
+  log('accountsActions.unblockAddress', {
+    account: updatedAccount,
+    accountName,
+    address,
+  })
   accountsStore.setState({accounts: updatedAccounts})
 }
 
@@ -368,7 +413,11 @@ export const blockCid = async (cid: string, accountName?: string) => {
   // update account in db
   await accountsDatabase.addAccount(updatedAccount)
   const updatedAccounts = {...accounts, [updatedAccount.id]: updatedAccount}
-  log('accountsActions.blockCid', {account: updatedAccount, accountName, cid})
+  log('accountsActions.blockCid', {
+    account: updatedAccount,
+    accountName,
+    cid,
+  })
   accountsStore.setState({accounts: updatedAccounts})
 }
 
@@ -393,7 +442,11 @@ export const unblockCid = async (cid: string, accountName?: string) => {
   // update account in db
   await accountsDatabase.addAccount(updatedAccount)
   const updatedAccounts = {...accounts, [updatedAccount.id]: updatedAccount}
-  log('accountsActions.unblockCid', {account: updatedAccount, accountName, cid})
+  log('accountsActions.unblockCid', {
+    account: updatedAccount,
+    accountName,
+    cid,
+  })
   accountsStore.setState({accounts: updatedAccounts})
 }
 
@@ -405,7 +458,11 @@ export const publishComment = async (publishCommentOptions: PublishCommentOption
     const accountId = accountNamesToAccountIds[accountName]
     account = accounts[accountId]
   }
-  validator.validateAccountsActionsPublishCommentArguments({publishCommentOptions, accountName, account})
+  validator.validateAccountsActionsPublishCommentArguments({
+    publishCommentOptions,
+    accountName,
+    account,
+  })
 
   // find author.previousCommentCid if any
   const accountCommentsWithCids = accountsComments[account.id]
@@ -447,7 +504,10 @@ export const publishComment = async (publishCommentOptions: PublishCommentOption
       publishCommentOptions.onChallengeVerification(challengeVerification, comment)
       if (!challengeVerification.challengeSuccess && lastChallenge) {
         // publish again automatically on fail
-        createCommentOptions = {...createCommentOptions, timestamp: Math.round(Date.now() / 1000)}
+        createCommentOptions = {
+          ...createCommentOptions,
+          timestamp: Math.round(Date.now() / 1000),
+        }
         comment = await account.plebbit.createComment(createCommentOptions)
         lastChallenge = undefined
         publishAndRetryFailedChallengeVerification()
@@ -459,16 +519,31 @@ export const publishComment = async (publishCommentOptions: PublishCommentOption
           await accountsDatabase.addAccountComment(account.id, commentWithCid, accountCommentIndex)
           accountsStore.setState(({accountsComments, commentCidsToAccountsComments}) => {
             const updatedAccountComments = [...accountsComments[account.id]]
-            const updatedAccountComment = {...commentWithCid, index: accountCommentIndex, accountId: account.id}
+            const updatedAccountComment = {
+              ...commentWithCid,
+              index: accountCommentIndex,
+              accountId: account.id,
+            }
             updatedAccountComments[accountCommentIndex] = updatedAccountComment
             return {
-              accountsComments: {...accountsComments, [account.id]: updatedAccountComments},
-              commentCidsToAccountsComments: {...commentCidsToAccountsComments, [challengeVerification?.publication?.cid]: {accountId: account.id, accountCommentIndex}},
+              accountsComments: {
+                ...accountsComments,
+                [account.id]: updatedAccountComments,
+              },
+              commentCidsToAccountsComments: {
+                ...commentCidsToAccountsComments,
+                [challengeVerification?.publication?.cid]: {
+                  accountId: account.id,
+                  accountCommentIndex,
+                },
+              },
             }
           })
 
           // clone the comment or it bugs publishing callbacks
-          const updatingComment = await account.plebbit.createComment({...comment})
+          const updatingComment = await account.plebbit.createComment({
+            ...comment,
+          })
           accountsActionsInternal
             .startUpdatingAccountCommentOnCommentUpdateEvents(updatingComment, account, accountCommentIndex)
             .catch((error: unknown) =>
@@ -486,8 +561,17 @@ export const publishComment = async (publishCommentOptions: PublishCommentOption
           return {}
         }
         const errors = [...(accountComment.errors || []), error]
-        accountComments[accountCommentIndex] = {...accountComment, errors, error}
-        return {accountsComments: {...accountsComments, [account.id]: accountComments}}
+        accountComments[accountCommentIndex] = {
+          ...accountComment,
+          errors,
+          error,
+        }
+        return {
+          accountsComments: {
+            ...accountsComments,
+            [account.id]: accountComments,
+          },
+        }
       })
       publishCommentOptions.onError?.(error, comment)
     })
@@ -499,8 +583,16 @@ export const publishComment = async (publishCommentOptions: PublishCommentOption
         if (!accountComment) {
           return {}
         }
-        accountComments[accountCommentIndex] = {...accountComment, publishingState}
-        return {accountsComments: {...accountsComments, [account.id]: accountComments}}
+        accountComments[accountCommentIndex] = {
+          ...accountComment,
+          publishingState,
+        }
+        return {
+          accountsComments: {
+            ...accountsComments,
+            [account.id]: accountComments,
+          },
+        }
       })
 
       publishCommentOptions.onPublishingStateChange?.(publishingState)
@@ -514,8 +606,16 @@ export const publishComment = async (publishCommentOptions: PublishCommentOption
         if (!accountComment) {
           return {}
         }
-        accountComments[accountCommentIndex] = {...accountComment, clients: utils.clone(comment.clients)}
-        return {accountsComments: {...accountsComments, [account.id]: accountComments}}
+        accountComments[accountCommentIndex] = {
+          ...accountComment,
+          clients: utils.clone(comment.clients),
+        }
+        return {
+          accountsComments: {
+            ...accountsComments,
+            [account.id]: accountComments,
+          },
+        }
       })
     })
 
@@ -536,7 +636,11 @@ export const publishComment = async (publishCommentOptions: PublishCommentOption
   accountsStore.setState(({accountsComments}) => {
     // save account comment index to update the comment later
     accountCommentIndex = accountsComments[account.id].length
-    createdAccountComment = {...createCommentOptions, index: accountCommentIndex, accountId: account.id}
+    createdAccountComment = {
+      ...createCommentOptions,
+      index: accountCommentIndex,
+      accountId: account.id,
+    }
     return {
       accountsComments: {
         ...accountsComments,
@@ -560,7 +664,11 @@ export const publishVote = async (publishVoteOptions: PublishVoteOptions, accoun
     const accountId = accountNamesToAccountIds[accountName]
     account = accounts[accountId]
   }
-  validator.validateAccountsActionsPublishVoteArguments({publishVoteOptions, accountName, account})
+  validator.validateAccountsActionsPublishVoteArguments({
+    publishVoteOptions,
+    accountName,
+    account,
+  })
 
   let createVoteOptions: any = {
     timestamp: Math.round(Date.now() / 1000),
@@ -584,7 +692,10 @@ export const publishVote = async (publishVoteOptions: PublishVoteOptions, accoun
       publishVoteOptions.onChallengeVerification(challengeVerification, vote)
       if (!challengeVerification.challengeSuccess && lastChallenge) {
         // publish again automatically on fail
-        createVoteOptions = {...createVoteOptions, timestamp: Math.round(Date.now() / 1000)}
+        createVoteOptions = {
+          ...createVoteOptions,
+          timestamp: Math.round(Date.now() / 1000),
+        }
         vote = await account.plebbit.createVote(createVoteOptions)
         lastChallenge = undefined
         publishAndRetryFailedChallengeVerification()
@@ -627,7 +738,11 @@ export const publishCommentEdit = async (publishCommentEditOptions: PublishComme
     const accountId = accountNamesToAccountIds[accountName]
     account = accounts[accountId]
   }
-  validator.validateAccountsActionsPublishCommentEditArguments({publishCommentEditOptions, accountName, account})
+  validator.validateAccountsActionsPublishCommentEditArguments({
+    publishCommentEditOptions,
+    accountName,
+    account,
+  })
 
   let createCommentEditOptions: any = {
     timestamp: Math.round(Date.now() / 1000),
@@ -650,7 +765,10 @@ export const publishCommentEdit = async (publishCommentEditOptions: PublishComme
       publishCommentEditOptions.onChallengeVerification(challengeVerification, commentEdit)
       if (!challengeVerification.challengeSuccess && lastChallenge) {
         // publish again automatically on fail
-        createCommentEditOptions = {...createCommentEditOptions, timestamp: Math.round(Date.now() / 1000)}
+        createCommentEditOptions = {
+          ...createCommentEditOptions,
+          timestamp: Math.round(Date.now() / 1000),
+        }
         commentEdit = await account.plebbit.createCommentEdit(createCommentEditOptions)
         lastChallenge = undefined
         publishAndRetryFailedChallengeVerification()
@@ -675,13 +793,20 @@ export const publishCommentEdit = async (publishCommentEditOptions: PublishComme
   log('accountsActions.publishCommentEdit', {createCommentEditOptions})
   accountsStore.setState(({accountsEdits}) => {
     // remove signer and author because not needed and they expose private key
-    const commentEdit = {...createCommentEditOptions, signer: undefined, author: undefined}
+    const commentEdit = {
+      ...createCommentEditOptions,
+      signer: undefined,
+      author: undefined,
+    }
     let commentEdits = accountsEdits[account.id][createCommentEditOptions.commentCid] || []
     commentEdits = [...commentEdits, commentEdit]
     return {
       accountsEdits: {
         ...accountsEdits,
-        [account.id]: {...accountsEdits[account.id], [createCommentEditOptions.commentCid]: commentEdits},
+        [account.id]: {
+          ...accountsEdits[account.id],
+          [createCommentEditOptions.commentCid]: commentEdits,
+        },
       },
     }
   })
@@ -695,14 +820,21 @@ export const publishSubplebbitEdit = async (subplebbitAddress: string, publishSu
     const accountId = accountNamesToAccountIds[accountName]
     account = accounts[accountId]
   }
-  validator.validateAccountsActionsPublishSubplebbitEditArguments({subplebbitAddress, publishSubplebbitEditOptions, accountName, account})
+  validator.validateAccountsActionsPublishSubplebbitEditArguments({
+    subplebbitAddress,
+    publishSubplebbitEditOptions,
+    accountName,
+    account,
+  })
 
   // account is the owner of the subplebbit and can edit it locally, no need to publish
   const localSubplebbitAddresses = await account.plebbit.listSubplebbits()
   if (localSubplebbitAddresses.includes(subplebbitAddress)) {
     await subplebbitsStore.getState().editSubplebbit(subplebbitAddress, publishSubplebbitEditOptions, account)
     // create fake success challenge verification for consistent behavior with remote subplebbit edit
-    publishSubplebbitEditOptions.onChallengeVerification({challengeSuccess: true})
+    publishSubplebbitEditOptions.onChallengeVerification({
+      challengeSuccess: true,
+    })
     publishSubplebbitEditOptions.onPublishingStateChange?.('succeeded')
     return
   }
@@ -733,8 +865,12 @@ export const publishSubplebbitEdit = async (subplebbitAddress: string, publishSu
     subplebbitEdit.once('challengeverification', async (challengeVerification: ChallengeVerification) => {
       publishSubplebbitEditOptions.onChallengeVerification(challengeVerification, subplebbitEdit)
       if (!challengeVerification.challengeSuccess && lastChallenge) {
+        const timestamp = Math.round(Date.now() / 1000)
         // publish again automatically on fail
-        createSubplebbitEditOptions = {...createSubplebbitEditOptions, timestamp: Math.round(Date.now() / 1000)}
+        createSubplebbitEditOptions = {
+          ...createSubplebbitEditOptions,
+          timestamp,
+        }
         subplebbitEdit = await account.plebbit.createSubplebbitEdit(createSubplebbitEditOptions)
         lastChallenge = undefined
         publishAndRetryFailedChallengeVerification()
@@ -767,7 +903,10 @@ export const createSubplebbit = async (createSubplebbitOptions: CreateSubplebbit
   }
 
   const subplebbit = await subplebbitsStore.getState().createSubplebbit(createSubplebbitOptions, account)
-  log('accountsActions.createSubplebbit', {createSubplebbitOptions, subplebbit})
+  log('accountsActions.createSubplebbit', {
+    createSubplebbitOptions,
+    subplebbit,
+  })
   return subplebbit
 }
 

@@ -103,10 +103,10 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
   },
 }))
 
-const getCommentFromDatabase = async (commentCid: string, account: Account) => {
+const getCommentFromDatabase = async (commentCid: string, account: Account): Promise<Comment | undefined> => {
   const commentData: any = await commentsDatabase.getItem(commentCid)
   if (!commentData) {
-    return
+    return undefined
   }
   const comment = await account.plebbit.createComment(commentData)
   return comment

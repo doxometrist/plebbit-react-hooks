@@ -5,7 +5,6 @@ import utils from '../../lib/utils'
 import PeerId from 'peer-id'
 import {fromString as uint8ArrayFromString} from 'uint8arrays/from-string'
 import {toString as uint8ArrayToString} from 'uint8arrays/to-string'
-// @ts-ignore
 import {Ed25519PublicKey, Ed25519PrivateKey} from 'libp2p-crypto/src/keys/ed25519-class'
 
 export const useAuthorLastCommentCid = (authorAddress?: string, comments?: (Comment | undefined)[], accountName?: string) => {
