@@ -1,6 +1,5 @@
-import {RenderHookResult, act, renderHook} from '@testing-library/react-hooks'
+import { RenderHookResult, act, renderHook } from '@testing-library/react-hooks'
 import {
-  UseAccountCommentsOptions,
   UseAccountResult,
   setPlebbitJs,
   useAccount,
@@ -16,13 +15,14 @@ import {
   useFeed,
   useNotifications,
   usePubsubSubscribe,
-  useSubplebbit,
+  useSubplebbit
 } from '../..'
-import PlebbitJsMock, {Comment, Pages, Plebbit, Subplebbit, resetPlebbitJsMock} from '../../lib/plebbit-js/plebbit-js-mock'
+import PlebbitJsMock, { Comment, Pages, Plebbit, Subplebbit, resetPlebbitJsMock } from '../../lib/plebbit-js/plebbit-js-mock'
 import testUtils from '../../lib/test-utils'
 import accountsStore from '../../stores/accounts'
 import * as accountsActions from '../../stores/accounts/accounts-actions'
 import commentsStore from '../../stores/comments'
+import { AccountComment, AccountVote } from '../../types'
 setPlebbitJs(PlebbitJsMock)
 
 describe('accounts', () => {
@@ -1074,20 +1074,10 @@ describe('accounts', () => {
       onChallengeVerification = jest.fn()
       publishOptions = {onChallenge, onChallengeVerification}
       rendered = renderHook<any, any>((props: any) => {
-        const useAccountCommentsOptions: UseAccountCommentsOptions = {
-          accountName: props?.accountName,
-          filter: {
-            commentCids: props?.commentCid && [props?.commentCid],
-            postCids: props?.postCid && [props?.postCid],
-            subplebbitAddresses: props?.subplebbitAddress && [props?.subplebbitAddress],
-            parentCids: props?.parentCid && [props?.parentCid],
-            hasParentCid: props?.hasParentCid,
-          },
-        }
-        const account = useAccount(props)
-        const {accountComments} = useAccountComments(useAccountCommentsOptions)
-        const {accountVotes} = useAccountVotes(useAccountCommentsOptions)
-        const accountVote = useAccountVote(props)
+        const account = useAccount({accountName: props?.accountName})
+        const {accountComments} = useAccountComments({accountName: props?.accountName, filter: props?.filter})
+        const {accountVotes} = useAccountVotes({accountName: props?.accountName, filter: props?.filter})
+        const accountVote = useAccountVote({accountName: props?.accountName, commentCid: props?.commentCid})
         return {account, accountComments, accountVotes, accountVote, ...accountsActions}
       })
       waitFor = testUtils.createWaitFor(rendered)
@@ -1511,28 +1501,28 @@ describe('accounts', () => {
     })
 
     test(`get account comments in a post`, () => {
-      rendered.rerender({postCid: 'post cid 1'})
+      rendered.rerender({filter: (comment: AccountComment) => comment.postCid === 'post cid 1'})
       expect(rendered.result.current.accountComments.length).toBe(1)
       expect(rendered.result.current.accountVotes.length).toBe(0)
       expect(rendered.result.current.accountComments[0].postCid).toBe('post cid 1')
     })
 
     test(`get account replies to a comment`, () => {
-      rendered.rerender({parentCid: 'parent comment cid 1'})
+      rendered.rerender({filter: (comment: AccountComment) => comment.parentCid === 'parent comment cid 1'})
       expect(rendered.result.current.accountComments.length).toBe(1)
       expect(rendered.result.current.accountVotes.length).toBe(0)
       expect(rendered.result.current.accountComments[0].parentCid).toBe('parent comment cid 1')
     })
 
     test(`get account posts in a subplebbit`, () => {
-      rendered.rerender({subplebbitAddress: 'subplebbit address 1', hasParentCid: false})
+      rendered.rerender({filter: (comment: AccountComment) => comment.subplebbitAddress === 'subplebbit address 1' && !comment.parentCid})
       expect(rendered.result.current.accountComments.length).toBe(1)
       expect(rendered.result.current.accountVotes.length).toBe(2)
       expect(rendered.result.current.accountComments[0].parentCid).toBe(undefined)
     })
 
     test(`get account posts and comments in a subplebbit`, () => {
-      rendered.rerender({subplebbitAddress: 'subplebbit address 1'})
+      rendered.rerender({filter: (comment: AccountComment) => comment.subplebbitAddress === 'subplebbit address 1'})
       expect(rendered.result.current.accountComments.length).toBe(2)
       expect(rendered.result.current.accountVotes.length).toBe(2)
       expect(rendered.result.current.accountComments[0].parentCid).toBe('parent comment cid 1')
@@ -1540,7 +1530,7 @@ describe('accounts', () => {
     })
 
     test(`get all account posts`, () => {
-      rendered.rerender({hasParentCid: false})
+      rendered.rerender({filter: (comment: AccountComment) => !comment.parentCid})
       expect(rendered.result.current.accountComments.length).toBe(2)
       expect(rendered.result.current.accountVotes.length).toBe(3)
       expect(rendered.result.current.accountComments[0].parentCid).toBe(undefined)
@@ -1548,7 +1538,7 @@ describe('accounts', () => {
     })
 
     test(`get account vote on a specific comment`, () => {
-      rendered.rerender({commentCid: 'comment cid 3'})
+      rendered.rerender({filter: (vote: AccountVote) => vote.commentCid === 'comment cid 3', commentCid: 'comment cid 3'})
       expect(rendered.result.current.accountComments.length).toBe(0)
       expect(rendered.result.current.accountVotes.length).toBe(1)
       expect(rendered.result.current.accountVotes[0].commentCid).toBe('comment cid 3')
