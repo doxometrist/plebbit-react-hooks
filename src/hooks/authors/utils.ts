@@ -1,5 +1,5 @@
 import {useEffect, useState, useMemo} from 'react'
-import {Comment, CommentsFilter} from '../../types'
+import {CommentState, CommentsFilter} from '../../types'
 import {useComments} from '../comments'
 import utils from '../../lib/utils'
 import PeerId from 'peer-id'

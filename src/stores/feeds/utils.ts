@@ -2,7 +2,7 @@ import assert from 'assert'
 import {
   Account,
   Accounts,
-  Comment,
+  CommentState,
   Feed,
   FeedOptions,
   Feeds,
@@ -380,7 +380,7 @@ function getOneFeed(
   const {subplebbitAddresses, sortType, accountId} = feedsOptions[feedName]
 
   // find all fetched posts
-  const bufferedFeedPosts: Comment[] = fetchBufferedPosts(subplebbitAddresses, subplebbits, sortType, subplebbitsPages)
+  const bufferedFeedPosts: CommentState[] = fetchBufferedPosts(subplebbitAddresses, subplebbits, sortType, subplebbitsPages)
 
   // sort the feed before filtering to get more accurate results
   const sortedBufferedFeedPosts = feedSorter.sort(sortType, bufferedFeedPosts)
@@ -390,8 +390,8 @@ function getOneFeed(
   return filteredPosts
 }
 
-function fetchBufferedPosts(subplebbitAddresses: string[], subplebbits: Subplebbits, sortType: string, subplebbitsPages: SubplebbitsPages): Comment[] {
-  const bufferedFeedPosts: Comment[] = []
+function fetchBufferedPosts(subplebbitAddresses: string[], subplebbits: Subplebbits, sortType: string, subplebbitsPages: SubplebbitsPages): CommentState[] {
+  const bufferedFeedPosts: CommentState[] = []
 
   // add each comment from each page, do not filter at this stage, filter after sorting
   for (const subplebbitAddress of subplebbitAddresses) {
@@ -401,7 +401,7 @@ function fetchBufferedPosts(subplebbitAddresses: string[], subplebbits: Subplebb
     }
 
     // use subplebbit preloaded posts if any
-    const preloadedPosts: Comment[] | undefined = subplebbits[subplebbitAddress].posts?.pages?.[sortType]?.comments
+    const preloadedPosts: CommentState[] | undefined = subplebbits[subplebbitAddress].posts?.pages?.[sortType]?.comments
     if (preloadedPosts) {
       bufferedFeedPosts.push(...preloadedPosts)
     }
@@ -424,8 +424,8 @@ function filterPosts(
   accounts: Accounts,
   accountId: string,
   subplebbitAddresses: string[]
-): Comment[] {
-  const filteredSortedBufferedFeedPosts: Comment[] = []
+): CommentState[] {
+  const filteredSortedBufferedFeedPosts: CommentState[] = []
   for (const post of sortedBufferedFeedPosts) {
     // don't add posts already loaded in loaded feeds
     if (loadedFeedsPosts[feedName]?.has(post.cid)) {

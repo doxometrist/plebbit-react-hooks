@@ -1,11 +1,11 @@
-import {Comment, Comments, CommentsFilter} from '../../types'
+import {CommentState, Comments, CommentsFilter} from '../../types'
 import {commentsPerPage} from './authors-comments-store'
 import assert from 'assert'
 import commentsStore from '../comments'
 
 export const getUpdatedLoadedAndBufferedComments = (
-  loadedComments: Comment[],
-  bufferedComments: Comment[],
+  loadedComments: CommentState[],
+  bufferedComments: CommentState[],
   pageNumber: number,
   filter: CommentsFilter | undefined,
   comments: Comments
@@ -24,7 +24,7 @@ export const getUpdatedLoadedAndBufferedComments = (
   return {loadedComments: newLoadedComments, bufferedComments: newBufferedComments}
 }
 
-export const getUpdatedBufferedComments = (loadedComments: Comment[], bufferedComments: Comment[], filter: CommentsFilter | undefined, comments: Comments) => {
+export const getUpdatedBufferedComments = (loadedComments: CommentState[], bufferedComments: CommentState[], filter: CommentsFilter | undefined, comments: Comments) => {
   // get previous loaded comment cids
   const previousLoadedCommentCids: {[commentCid: string]: boolean} = {}
   for (const comment of loadedComments) {
@@ -54,7 +54,7 @@ export const getUpdatedBufferedComments = (loadedComments: Comment[], bufferedCo
   return newBufferedComments
 }
 
-const commentsHaveChanged = (comments1: Comment[], comments2: Comment[]) => {
+const commentsHaveChanged = (comments1: CommentState[], comments2: CommentState[]) => {
   if (comments1 === comments2) {
     return false
   }
@@ -69,12 +69,12 @@ const commentsHaveChanged = (comments1: Comment[], comments2: Comment[]) => {
   return false
 }
 
-export const filterAuthorComments = (authorComments: Comment[], filter: AuthorCommentsFilter) => {
+export const filterAuthorComments = (authorComments: CommentState[], filter: AuthorCommentsFilter) => {
   assert(
     !filter.subplebbitAddresses || Array.isArray(filter.subplebbitAddresses),
     `authorsCommentsStore filterAuthorComments invalid argument filter.subplebbitAddresses '${filter.subplebbitAddresses}' not an array`
   )
-  const filtered: Comment[] = []
+  const filtered: CommentState[] = []
   for (const authorComment of authorComments) {
     let isFilteredOut = false
     if (filter.subplebbitAddresses?.length && !filter.subplebbitAddresses.includes(authorComment.subplebbitAddress)) {

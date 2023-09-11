@@ -1,7 +1,7 @@
 import Logger from '@plebbit/plebbit-logger'
 import assert from 'assert'
 import QuickLru from 'quick-lru'
-import {Comment} from '../../types'
+import {CommentState} from '../../types'
 const log = Logger('plebbit-react-hooks:utils')
 
 const merge = (...args: any) => {
@@ -72,8 +72,8 @@ const sortTypes = [
 ]
 
 // this function should not clone the comments to not waste memory
-export const flattenCommentsPages = (pageInstanceOrPagesInstance: any): Comment[] => {
-  const flattenedComments: Comment[] = []
+export const flattenCommentsPages = (pageInstanceOrPagesInstance: any): CommentState[] => {
+  const flattenedComments: CommentState[] = []
 
   // if is a Page instance
   for (const comment of pageInstanceOrPagesInstance?.comments || []) {
@@ -100,18 +100,17 @@ export const flattenCommentsPages = (pageInstanceOrPagesInstance: any): Comment[
   }
 
   // remove duplicate comments
-
-  let uniqueIds = new Set()
-  const uniqueArray: Comment[] = flattenedComments.filter((item) => {
-    if (uniqueIds.has(item.cid)) {
-      return false
-    } else {
-      uniqueIds.add(item.cid)
-      return true
+  const flattenedCommentsObject: {[cid: string]: CommentState} = {}
+  for (const comment of flattenedComments) {
+    if (comment.cid) {
+      flattenedCommentsObject[comment.cid] = comment
     }
-  })
-
-  return uniqueArray
+  }
+  const uniqueFlattened: CommentState[] = []
+  for (const cid in flattenedCommentsObject) {
+    uniqueFlattened.push(flattenedCommentsObject[cid])
+  }
+  return uniqueFlattened
 }
 
 export const memo = (functionToMemo: Function, memoOptions: any) => {

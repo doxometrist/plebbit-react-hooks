@@ -4,7 +4,7 @@ import validator from '../lib/validator'
 import Logger from '@plebbit/plebbit-logger'
 const log = Logger('plebbit-react-hooks:comments:hooks')
 import assert from 'assert'
-import {Comment, UseCommentsOptions, UseCommentsResult, UseCommentOptions, UseCommentResult} from '../types'
+import {CommentState, UseCommentsOptions, UseCommentsResult, UseCommentOptions, UseCommentResult} from '../types'
 import useCommentsStore from '../stores/comments'
 import useAccountsStore from '../stores/accounts'
 import useSubplebbitsPagesStore from '../stores/subplebbits-pages'
@@ -107,8 +107,11 @@ export function useComments(options?: UseCommentsOptions): UseCommentsResult {
   assert(!options || typeof options === 'object', `useComments options argument '${options}' not an object`)
   const {commentCids, accountName} = options || {}
   const account = useAccount({accountName})
-  const commentsStoreComments: (Comment | undefined)[] = useCommentsStore((state) => (commentCids || []).map((commentCid) => state.comments[commentCid || '']), shallow)
-  const subplebbitsPagesComments: (Comment | undefined)[] = useSubplebbitsPagesStore(
+  const commentsStoreComments: (CommentState | undefined)[] = useCommentsStore(
+    (state) => (commentCids || []).map((commentCid) => state.comments[commentCid || '']),
+    shallow
+  )
+  const subplebbitsPagesComments: (CommentState | undefined)[] = useSubplebbitsPagesStore(
     (state) => (commentCids || []).map((commentCid) => state.comments[commentCid || '']),
     shallow
   )

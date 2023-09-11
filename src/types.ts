@@ -9,98 +9,98 @@ import EventEmitter from 'events'
  * Public interface
  */
 
-export interface Options {
+export interface HookOptions {
   accountName?: string
   onError?(error: Error): void
 }
 
-export interface Result {
+export interface HookResult {
   state: string
   error: Error | undefined
   errors: Error[]
 }
 
 // useAccount(options): result
-export interface UseAccountOptions extends Options {}
-export interface UseAccountResult extends Result, Account {}
+export interface UseAccountOptions extends HookOptions {}
+export interface UseAccountResult extends HookResult, Account {}
 
 // useAccounts(options): result
-export interface UseAccountsOptions extends Options {}
-export interface UseAccountsResult extends Result {
+export interface UseAccountsOptions extends HookOptions {}
+export interface UseAccountsResult extends HookResult {
   accounts: Account[]
 }
 
 // useAccountComments(options): result
-export interface UseAccountCommentsOptions extends Options {
+export interface UseAccountCommentsOptions extends HookOptions {
   filter?: AccountPublicationsFilter
 }
-export interface UseAccountCommentsResult extends Result {
+export interface UseAccountCommentsResult extends HookResult {
   accountComments: AccountComment[]
 }
 
 // useAccountComment(options): result
-export interface UseAccountCommentOptions extends Options {
+export interface UseAccountCommentOptions extends HookOptions {
   commentIndex?: number
 }
-export interface UseAccountCommentResult extends Result, AccountComment {}
+export interface UseAccountCommentResult extends HookResult {}
 
 // useAccountVotes(options): result
-export interface UseAccountVotesOptions extends Options {
+export interface UseAccountVotesOptions extends HookOptions {
   filter?: AccountPublicationsFilter
 }
-export interface UseAccountVotesResult extends Result {
+export interface UseAccountVotesResult extends HookResult {
   accountVotes: AccountVote[]
 }
 
 // useAccountVote(options): result
-export interface UseAccountVoteOptions extends Options {
+export interface UseAccountVoteOptions extends HookOptions {
   commentCid?: string
 }
-export interface UseAccountVoteResult extends Result, AccountVote {
+export interface UseAccountVoteResult extends HookResult, AccountVote {
   commentCid: string | undefined
   vote: number | undefined
 }
 
 // useAccountEdits(options): result
-export interface UseAccountEditsOptions extends Options {
+export interface UseAccountEditsOptions extends HookOptions {
   filter?: AccountPublicationsFilter
 }
-export interface UseAccountEditsResult extends Result {
+export interface UseAccountEditsResult extends HookResult {
   accountEdits: AccountEdit[]
 }
 
 // useNotifications(options): result
-export interface UseNotificationsOptions extends Options {}
-export interface UseNotificationsResult extends Result {
+export interface UseNotificationsOptions extends HookOptions {}
+export interface UseNotificationsResult extends HookResult {
   notifications: Notification[]
   markAsRead(): Promise<void>
 }
 
 // useAccountSubplebbits(options): result
-export interface UseAccountSubplebbitsOptions extends Options {}
-export interface UseAccountSubplebbitsResult extends Result {
+export interface UseAccountSubplebbitsOptions extends HookOptions {}
+export interface UseAccountSubplebbitsResult extends HookResult {
   accountSubplebbits: AccountSubplebbit[]
 }
 
 // usePubsubSubscribe(options): result
-export interface UsePubsubSubscribeOptions extends Options {
+export interface UsePubsubSubscribeOptions extends HookOptions {
   subplebbitAddress?: string
 }
-export interface UsePubsubSubscribeResult extends Result {}
+export interface UsePubsubSubscribeResult extends HookResult {}
 
 // useComment(options): result
-export interface UseCommentOptions extends Options {
+export interface UseCommentOptions extends HookOptions {
   commentCid?: string
 }
-export interface UseCommentResult extends Result, Comment {}
+export interface UseCommentResult extends HookResult, CommentState {}
 
 // useComments(options): result
-export interface UseCommentsOptions extends Options {
+export interface UseCommentsOptions extends HookOptions {
   commentCids?: string[]
 }
-export interface UseCommentsResult extends Result {
+export interface UseCommentsResult extends HookResult {
   // TODO: remove | undefined, that shouldn't happen when comments have comment.state
-  comments: (Comment | undefined)[]
+  comments: (CommentState | undefined)[]
 }
 
 // useCommentThumbnailUrl(options): result
@@ -123,13 +123,13 @@ export interface UseCommentsResult extends Result {
 // }
 
 // useEditedComment(options): result
-export interface UseEditedCommentOptions extends Options {
-  comment?: Comment
+export interface UseEditedCommentOptions extends HookOptions {
+  comment?: CommentState
 }
 // todo have a CommentEdit interface?
-export interface UseEditedCommentResult extends Result {
+export interface UseEditedCommentResult extends HookResult {
   // editedComment only contains the succeeded and pending props, failed props aren't added
-  editedComment: Comment | undefined
+  editedComment: CommentState | undefined
   succeededEdits: {[succeededEditPropertyName: string]: any}
   pendingEdits: {[pendingEditPropertyName: string]: any}
   failedEdits: {[failedEditPropertyName: string]: any}
@@ -137,107 +137,107 @@ export interface UseEditedCommentResult extends Result {
 }
 
 // useSubplebbit(options): result
-export interface UseSubplebbitOptions extends Options {
+export interface UseSubplebbitOptions extends HookOptions {
   subplebbitAddress?: string
 }
-export interface UseSubplebbitResult extends Result, Subplebbit {}
+export interface UseSubplebbitResult extends HookResult, Subplebbit {}
 
 // useSubplebbits(options): result
-export interface UseSubplebbitsOptions extends Options {
+export interface UseSubplebbitsOptions extends HookOptions {
   subplebbitAddresses?: string[]
 }
-export interface UseSubplebbitsResult extends Result {
+export interface UseSubplebbitsResult extends HookResult {
   subplebbits: (Subplebbit | undefined)[]
 }
 
 // useSubplebbitStats(options): result
-export interface UseSubplebbitStatsOptions extends Options {
+export interface UseSubplebbitStatsOptions extends HookOptions {
   subplebbitAddress?: string
 }
-export interface UseSubplebbitStatsResult extends Result, SubplebbitStats {}
+export interface UseSubplebbitStatsResult extends HookResult, SubplebbitStats {}
 
 // useResolvedSubplebbitAddress(options): result
-export interface UseResolvedSubplebbitAddressOptions extends Options {
+export interface UseResolvedSubplebbitAddressOptions extends HookOptions {
   subplebbitAddress: string | undefined
   cache?: boolean
 }
-export interface UseResolvedSubplebbitAddressResult extends Result {
+export interface UseResolvedSubplebbitAddressResult extends HookResult {
   resolvedAddress: string | undefined
   chainProvider: ChainProvider | undefined
 }
 
 // useFeed(options): result
-export interface UseFeedOptions extends Options {
+export interface UseFeedOptions extends HookOptions {
   subplebbitAddresses: string[]
   sortType?: string
   postsPerPage?: number
   filter?: CommentsFilter
 }
-export interface UseFeedResult extends Result {
-  feed: Comment[]
+export interface UseFeedResult extends HookResult {
+  feed: CommentState[]
   hasMore: boolean
   loadMore(): Promise<void>
 }
 
 // useBufferedFeeds(options): result
-export interface UseBufferedFeedsOptions extends Options {
+export interface UseBufferedFeedsOptions extends HookOptions {
   feedsOptions?: UseFeedOptions[]
 }
-export interface UseBufferedFeedsResult extends Result {
-  bufferedFeeds: Comment[][]
+export interface UseBufferedFeedsResult extends HookResult {
+  bufferedFeeds: CommentState[][]
 }
 
 // useAuthor(options): result
-export interface UseAuthorOptions extends Options {
+export interface UseAuthorOptions extends HookOptions {
   authorAddress?: string
   // the last known comment cid of this author (required, can't fetch author from author address alone)
   commentCid?: string
 }
-export interface UseAuthorResult extends Result {
+export interface UseAuthorResult extends HookResult {
   author: Author | undefined
 }
 
 // useAuthorComments(options): result
-export interface UseAuthorCommentsOptions extends Options {
+export interface UseAuthorCommentsOptions extends HookOptions {
   authorAddress?: string
   // the last known comment cid of this author (required, can't fetch author comment from author address alone)
   commentCid?: string
   // TODO: add filter
   filter?: CommentsFilter
 }
-export interface UseAuthorCommentsResult extends Result {
+export interface UseAuthorCommentsResult extends HookResult {
   // TODO: remove | undefined, that shouldn't happen when comments have comment.state
-  authorComments: (Comment | undefined)[]
+  authorComments: (CommentState | undefined)[]
   lastCommentCid: string | undefined
   hasMore: boolean
   loadMore(): Promise<void>
 }
 
 // useResolvedAuthorAddress(options): result
-export interface UseResolvedAuthorAddressOptions extends Options {
+export interface UseResolvedAuthorAddressOptions extends HookOptions {
   author?: Author
   cache?: boolean
 }
-export interface UseResolvedAuthorAddressResult extends Result {
+export interface UseResolvedAuthorAddressResult extends HookResult {
   resolvedAddress: string | undefined
   chainProvider: ChainProvider | undefined
 }
 
 // useAuthorAvatar(options): result
-export interface UseAuthorAvatarOptions extends Options {
+export interface UseAuthorAvatarOptions extends HookOptions {
   author?: Author
 }
-export interface UseAuthorAvatarResult extends Result {
+export interface UseAuthorAvatarResult extends HookResult {
   imageUrl: string | undefined
   metadataUrl: string | undefined
   chainProvider: ChainProvider | undefined
 }
 
 // useAuthorAddress(options): result
-export interface UseAuthorAddressOptions extends Options {
-  comment?: Comment
+export interface UseAuthorAddressOptions extends HookOptions {
+  comment?: CommentState
 }
-export interface UseAuthorAddressResult extends Result {
+export interface UseAuthorAddressResult extends HookResult {
   authorAddress: string | undefined
   shortAuthorAddress: string | undefined
 }
@@ -300,12 +300,12 @@ export interface UseAuthorAddressResult extends Result {
 // }
 
 // usePublishComment(options): result
-export interface UsePublishCommentOptions extends Options {
-  onChallenge?(challenge: Challenge, comment?: Comment): Promise<void>
-  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: Comment): Promise<void>
+export interface UsePublishCommentOptions extends HookOptions {
+  onChallenge?(challenge: Challenge, comment?: CommentState): Promise<void>
+  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: CommentState): Promise<void>
   [publishOption: string]: any
 }
-export interface UsePublishCommentResult extends Result {
+export interface UsePublishCommentResult extends HookResult {
   index: number | undefined
   challenge: Challenge | undefined
   challengeVerification: ChallengeVerification | undefined
@@ -314,12 +314,12 @@ export interface UsePublishCommentResult extends Result {
 }
 
 // usePublishVote(options): result
-export interface UsePublishVoteOptions extends Options {
-  onChallenge?(challenge: Challenge, comment?: Comment): Promise<void>
-  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: Comment): Promise<void>
+export interface UsePublishVoteOptions extends HookOptions {
+  onChallenge?(challenge: Challenge, comment?: CommentState): Promise<void>
+  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: CommentState): Promise<void>
   [publishOption: string]: any
 }
-export interface UsePublishVoteResult extends Result {
+export interface UsePublishVoteResult extends HookResult {
   challenge: Challenge | undefined
   challengeVerification: ChallengeVerification | undefined
   publishVote(): Promise<void>
@@ -327,12 +327,12 @@ export interface UsePublishVoteResult extends Result {
 }
 
 // usePublishCommentEdit(options): result
-export interface UsePublishCommentEditOptions extends Options {
-  onChallenge?(challenge: Challenge, comment?: Comment): Promise<void>
-  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: Comment): Promise<void>
+export interface UsePublishCommentEditOptions extends HookOptions {
+  onChallenge?(challenge: Challenge, comment?: CommentState): Promise<void>
+  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: CommentState): Promise<void>
   [publishOption: string]: any
 }
-export interface UsePublishCommentEditResult extends Result {
+export interface UsePublishCommentEditResult extends HookResult {
   challenge: Challenge | undefined
   challengeVerification: ChallengeVerification | undefined
   publishCommentEdit(): Promise<void>
@@ -340,13 +340,13 @@ export interface UsePublishCommentEditResult extends Result {
 }
 
 // usePublishSubplebbitEdit(options): result
-export interface UsePublishSubplebbitEditOptions extends Options {
+export interface UsePublishSubplebbitEditOptions extends HookOptions {
   subplebbitAddress?: string
-  onChallenge?(challenge: Challenge, comment?: Comment): Promise<void>
-  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: Comment): Promise<void>
+  onChallenge?(challenge: Challenge, comment?: CommentState): Promise<void>
+  onChallengeVerification?(challengeVerification: ChallengeVerification, comment?: CommentState): Promise<void>
   [publishOption: string]: any
 }
-export interface UsePublishSubplebbitEditResult extends Result {
+export interface UsePublishSubplebbitEditResult extends HookResult {
   challenge: Challenge | undefined
   challengeVerification: ChallengeVerification | undefined
   publishSubplebbitEdit(): Promise<void>
@@ -354,10 +354,10 @@ export interface UsePublishSubplebbitEditResult extends Result {
 }
 
 // useCreateSubplebbit(options): result
-export interface UseCreateSubplebbitOptions extends Options {
+export interface UseCreateSubplebbitOptions extends HookOptions {
   [createSubplebbitOption: string]: any
 }
-export interface UseCreateSubplebbitResult extends Result {
+export interface UseCreateSubplebbitResult extends HookResult {
   createdSubplebbit: Subplebbit | undefined
   createSubplebbit(): Promise<void>
 }
@@ -372,23 +372,23 @@ export interface UseCreateSubplebbitResult extends Result {
 // }
 
 // useSubscribe(options): result
-export interface UseSubscribeOptions extends Options {
+export interface UseSubscribeOptions extends HookOptions {
   subplebbitAddress?: string
   multisubAddress?: string
   authorAddress?: string
 }
-export interface UseSubscribeResult extends Result {
+export interface UseSubscribeResult extends HookResult {
   subscribed?: boolean
   subscribe(): Promise<void>
   unsubscribe(): Promise<void>
 }
 
 // useBlock(options): result
-export interface UseBlockOptions extends Options {
+export interface UseBlockOptions extends HookOptions {
   address?: string
   cid?: string
 }
-export interface UseBlockResult extends Result {
+export interface UseBlockResult extends HookResult {
   blocked: boolean | undefined
   block(): Promise<void>
   unblock(): Promise<void>
@@ -522,13 +522,15 @@ export interface Signature {
   signedPropertyNames: string[] // the fields that were signed as part of the signature e.g. ['title', 'content', 'author', etc.] client should require that certain fields be signed or reject the publication, e.g. 'content', 'author', 'timestamp' are essential
 }
 
-export interface Comment extends Publication /* (IPFS file) */ {
+export interface CommentState extends Publication /* (IPFS file) */ {
   cid?: string // client id of the comment
   postCid?: string // helps faster loading post info for reply direct linking, added by the subplebbit owner not author
   previousCid?: string // each post is a linked list
   depth?: number // 0 = post, 1 = top level reply, 2+ = nested reply, added by the subplebbit owner not author
   ipnsName?: string // each post/comment needs its own IPNS record (CommentUpdate) for its mutable data like edits, vote counts, comments
   parentCid?: string // same as postCid for top level comments
+  locked?: boolean
+  updatedAt?: number
   spoiler?: boolean
   flair?: Flair // arbitrary colored string added by the author or mods to describe the author or comment
 }
@@ -703,7 +705,7 @@ export interface Wallet {
  * Subplebbits and comments store
  */
 export type Subplebbits = {[subplebbitAddress: string]: Subplebbit}
-export type Comments = {[commentCid: string]: Comment}
+export type Comments = {[commentCid: string]: CommentState}
 
 /**
  * Accounts store
@@ -716,8 +718,11 @@ export type AccountsMetadata = {
   accountNamesToAccountIds: {[accountName: string]: string}
 }
 export type AccountNamesToAccountIds = {[accountName: string]: string}
-export interface AccountComment extends Comment {
+export interface AccountComment extends CommentState {
+  state: string
   index: number
+  error: any
+  errors: any
   accountId: string
   upvoteCountMarkedAsRead: number // upvote count the last time the user read it, needed for upvote notifications
 }
@@ -726,7 +731,7 @@ export type AccountsComments = {[accountId: string]: AccountComments}
 export type CommentCidsToAccountsComments = {
   [commentCid: string]: {accountId: string; accountCommentIndex: number}
 }
-export interface AccountCommentReply extends Comment {
+export interface AccountCommentReply extends CommentState {
   markedAsRead: boolean
 }
 export type AccountCommentsReplies = {[replyCid: string]: AccountCommentReply}
@@ -757,7 +762,7 @@ export type AccountPublicationsFilter = (publication: AccountComment | AccountVo
 /**
  * Feeds store
  */
-export type Feed = Comment[]
+export type Feed = CommentState[]
 export type Feeds = {[feedName: string]: Feed}
 export type FeedOptions = {
   subplebbitAddresses: string[]
@@ -772,17 +777,17 @@ export type FeedSubplebbitsPostCounts = {[subplebbitAddress: string]: number}
 export type FeedsSubplebbitsPostCounts = {[feedName: string]: FeedSubplebbitsPostCounts}
 export type SubplebbitPage = {
   nextCid?: string
-  comments: Comment[]
+  comments: CommentState[]
 }
 
 export type SubplebbitsPages = {[pageCid: string]: SubplebbitPage}
-export type CommentsFilter = (comment: Comment) => Boolean
+export type CommentsFilter = (comment: CommentState) => Boolean
 
 /**
  * Authors comments store
  */
 // authorCommentsName is a string used a key to represent authorAddress + filter + accountId
-export type AuthorsComments = {[authorCommentsName: string]: Comment[]}
+export type AuthorsComments = {[authorCommentsName: string]: CommentState[]}
 export type AuthorCommentsOptions = {
   authorAddress: string
   pageNumber: number

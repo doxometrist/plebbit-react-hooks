@@ -1,12 +1,17 @@
 import validator from '../../lib/validator'
 import localForageLru from '../../lib/localforage-lru'
-const commentsDatabase = localForageLru.createInstance({name: 'comments', size: 5000})
+const commentsDatabase = localForageLru.createInstance({
+  name: 'comments',
+  size: 5000,
+})
 import Logger from '@plebbit/plebbit-logger'
 const log = Logger('plebbit-react-hooks:comments:stores')
-import {Comment, Comments, Account} from '../../types'
+import {Account, Comments, CommentState} from '../../types'
 import utils from '../../lib/utils'
 import createStore from 'zustand'
 import accountsStore from '../accounts'
+import {CommentType} from '@plebbit/plebbit-js/dist/node/types'
+import {Comment} from '@plebbit/plebbit-js/dist/node/comment'
 
 let plebbitGetCommentPending: {[key: string]: boolean} = {}
 
@@ -27,7 +32,7 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
     const {comments} = getState()
 
     // comment is in store already, do nothing
-    let comment: Comment | undefined = comments[commentCid]
+    let comment: CommentState | undefined = comments[commentCid]
     if (comment || plebbitGetCommentPending[commentCid + account.id]) {
       return
     }
@@ -40,11 +45,16 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
     // comment not in database, fetch from plebbit-js
     try {
       if (!comment) {
-        comment = await account.plebbit.createComment({cid: commentCid})
+        // todo fix this
+        comment = await account.plebbit.createComment({
+          cid: commentCid,
+        } as unknown as CommentType)
         await commentsDatabase.setItem(commentCid, utils.clone(comment))
       }
       log('commentsStore.addCommentToStore', {commentCid, comment, account})
-      setState((state: CommentsState) => ({comments: {...state.comments, [commentCid]: utils.clone(comment)}}))
+      setState((state: CommentsState) => ({
+        comments: {...state.comments, [commentCid]: utils.clone(comment)},
+      }))
     } catch (e) {
       throw e
     } finally {
@@ -53,11 +63,17 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
 
     // the comment is still missing up to date mutable data like upvotes, edits, replies, etc
     // todo so it's also a listener, not just an interface?
-    comment?.on('update', async (updatedComment: Comment) => {
+    comment?.on('update', async (updatedComment: CommentState) => {
       updatedComment = utils.clone(updatedComment)
       await commentsDatabase.setItem(commentCid, updatedComment)
-      log('commentsStore comment update', {commentCid, updatedComment, account})
-      setState((state: CommentsState) => ({comments: {...state.comments, [commentCid]: updatedComment}}))
+      log('commentsStore comment update', {
+        commentCid,
+        updatedComment,
+        account,
+      })
+      setState((state: CommentsState) => ({
+        comments: {...state.comments, [commentCid]: updatedComment},
+      }))
     })
 
     comment?.on('updatingstatechange', (updatingState: string) => {
@@ -73,14 +89,23 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
       setState((state: CommentsState) => {
         let commentErrors = state.errors[commentCid] || []
         commentErrors = [...commentErrors, error]
-        return {...state, errors: {...state.errors, [commentCid]: commentErrors}}
+        return {
+          ...state,
+          errors: {...state.errors, [commentCid]: commentErrors},
+        }
       })
     })
 
     // set clients on comment so the frontend can display it, dont persist in db because a reload cancels updating
     utils.clientsOnStateChange(comment?.clients, (state: string) => {
       setState((state: CommentsState) => ({
-        comments: {...state.comments, [commentCid]: {...state.comments[commentCid], clients: utils.clone(comment?.clients)}},
+        comments: {
+          ...state.comments,
+          [commentCid]: {
+            ...state.comments[commentCid],
+            clients: utils.clone(comment?.clients),
+          },
+        },
       }))
     })
 
@@ -94,7 +119,12 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
         accountsStore
           .getState()
           .accountsActionsInternal.addCidToAccountComment(comment)
-          .catch((error) => log.error('accountsActionsInternal.addCidToAccountComment error', {comment, error}))
+          .catch((error) =>
+            log.error('accountsActionsInternal.addCidToAccountComment error', {
+              comment,
+              error,
+            })
+          )
       )
     }
 
@@ -105,9 +135,7 @@ const commentsStore = createStore<CommentsState>((setState: Function, getState: 
 
 const getCommentFromDatabase = async (commentCid: string, account: Account): Promise<Comment | undefined> => {
   const commentData: any = await commentsDatabase.getItem(commentCid)
-  if (!commentData) {
-    return undefined
-  }
+  if (!commentData) return undefined
   const comment = await account.plebbit.createComment(commentData)
   return comment
 }

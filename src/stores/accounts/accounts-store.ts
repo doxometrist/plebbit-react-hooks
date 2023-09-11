@@ -9,7 +9,7 @@ import {
   Account,
   Accounts,
   AccountsActions,
-  Comment,
+  CommentState,
   AccountsVotes,
   AccountsEdits,
   AccountComment,

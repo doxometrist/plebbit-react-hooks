@@ -1,4 +1,4 @@
-import { RenderHookResult, act, renderHook } from '@testing-library/react-hooks'
+import {RenderHookResult, Renderer, act, renderHook} from '@testing-library/react-hooks'
 import {
   UseAccountResult,
   setPlebbitJs,
@@ -15,14 +15,14 @@ import {
   useFeed,
   useNotifications,
   usePubsubSubscribe,
-  useSubplebbit
+  useSubplebbit,
 } from '../..'
-import PlebbitJsMock, { Comment, Pages, Plebbit, Subplebbit, resetPlebbitJsMock } from '../../lib/plebbit-js/plebbit-js-mock'
+import PlebbitJsMock, {Comment, Pages, Plebbit, Subplebbit, resetPlebbitJsMock} from '../../lib/plebbit-js/plebbit-js-mock'
 import testUtils from '../../lib/test-utils'
 import accountsStore from '../../stores/accounts'
 import * as accountsActions from '../../stores/accounts/accounts-actions'
 import commentsStore from '../../stores/comments'
-import { AccountComment, AccountVote } from '../../types'
+import {AccountComment, AccountVote} from '../../types'
 setPlebbitJs(PlebbitJsMock)
 
 describe('accounts', () => {
@@ -76,8 +76,8 @@ describe('accounts', () => {
       const waitFor = testUtils.createWaitFor(rendered)
 
       // reloaded accounts have new default plebbit options
-      await waitFor(() => rendered.result.current.account.plebbitOptions.ipfsHttpClientsOptions[0] === plebbitOptions.ipfsHttpClientsOptions[0])
-      expect(rendered.result.current.account.plebbitOptions.ipfsHttpClientsOptions[0]).toBe(plebbitOptions.ipfsHttpClientsOptions[0])
+      await waitFor(() => rendered.result.current.account.plebbitOptions.ipfsHttpClientsOptions?.at(0) === plebbitOptions.ipfsHttpClientsOptions[0])
+      expect(rendered.result.current.account.plebbitOptions.ipfsHttpClientsOptions?.at(0)).toBe(plebbitOptions.ipfsHttpClientsOptions[0])
 
       // set account with new default plebbit options
       await act(async () => {
@@ -89,7 +89,7 @@ describe('accounts', () => {
       // account has new default plebbit options
       await waitFor(() => rendered.result.current.account.author.displayName === 'john')
       expect(rendered.result.current.account.author.displayName).toBe('john')
-      expect(rendered.result.current.account.plebbitOptions.ipfsHttpClientsOptions[0]).toBe(plebbitOptions.ipfsHttpClientsOptions[0])
+      expect(rendered.result.current.account.plebbitOptions.ipfsHttpClientsOptions?.at(0)).toBe(plebbitOptions.ipfsHttpClientsOptions[0])
 
       // change default plebbit options and reload accounts
       plebbitOptions.ipfsHttpClientsOptions = ['http://two:5001/api/v0']
@@ -104,7 +104,7 @@ describe('accounts', () => {
       await waitFor2(() => rendered2.result.current.account)
 
       // account plebbit options were not saved, has new default plebbit options
-      expect(rendered2.result.current.account.plebbitOptions.ipfsHttpClientsOptions[0]).toBe(plebbitOptions.ipfsHttpClientsOptions[0])
+      expect(rendered2.result.current.account.plebbitOptions.ipfsHttpClientsOptions?.at(0)).toBe(plebbitOptions.ipfsHttpClientsOptions[0])
       expect(rendered2.result.current.account.author.displayName).toBe('john')
 
       // @ts-ignore

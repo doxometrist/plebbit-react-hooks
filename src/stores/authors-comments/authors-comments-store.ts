@@ -2,7 +2,7 @@ import Logger from '@plebbit/plebbit-logger'
 const log = Logger('plebbit-react-hooks:authors:stores')
 import createStore from 'zustand'
 import assert from 'assert'
-import {CommentsFilter, AuthorCommentsOptions, AuthorsComments, Account, Comment} from '../../types'
+import {CommentsFilter, AuthorCommentsOptions, AuthorsComments, Account, CommentState} from '../../types'
 import commentsStore, {CommentsState} from '../comments'
 import QuickLru from 'quick-lru'
 import {toSizes, getUpdatedLoadedAndBufferedComments, getNextCommentCidToFetchNotFetched} from './utils'
@@ -16,7 +16,7 @@ export const commentBufferSize = 50
 export type AuthorsCommentsState = {
   // authorCommentsName is a string used a key to represent authorAddress + filter + accountId
   options: {[authorCommentsName: string]: AuthorCommentsOptions}
-  loadedComments: {[authorCommentsName: string]: Comment[]}
+  loadedComments: {[authorCommentsName: string]: CommentState[]}
   hasMoreBufferedComments: {[authorCommentsName: string]: boolean}
   bufferedCommentCids: {[authorAddress: string]: Set<string>}
   nextCommentCidsToFetch: {[authorAddress: string]: string | undefined}
@@ -74,7 +74,7 @@ const authorsCommentsStore = createStore<AuthorsCommentsState>((setState: Functi
     updateLoadedComments()
   },
 
-  setNextCommentCidsToFetch: (authorAddress: string, authorComment: Comment) => {
+  setNextCommentCidsToFetch: (authorAddress: string, authorComment: CommentState) => {
     assert(authorAddress && typeof authorAddress === 'string', `authorsCommentsActions.setNextCommentCidsToFetch invalid argument authorAddress '${authorAddress}'`)
     assert(typeof authorComment?.timestamp === 'number', `authorsCommentsActions.setNextCommentCidsToFetch invalid argument authorComment '${authorComment}'`)
     const {nextCommentCidsToFetch, shouldFetchNextComment, lastCommentCids} = getState()
@@ -159,7 +159,7 @@ const authorsCommentsStore = createStore<AuthorsCommentsState>((setState: Functi
     for (const name of authorCommentsNames) {
       const {authorAddress, pageNumber, filter} = options[name]
       const previousLoadedComments = previousAuthorsLoadedComments[name]
-      const unfilteredBufferedComments: Comment[] = [...bufferedCommentCids[authorAddress]].map((commentCid: string) => comments[commentCid])
+      const unfilteredBufferedComments: CommentState[] = [...bufferedCommentCids[authorAddress]].map((commentCid: string) => comments[commentCid])
 
       const {loadedComments, bufferedComments: filteredBufferedComments} = getUpdatedLoadedAndBufferedComments(
         previousLoadedComments,
@@ -341,7 +341,7 @@ const setLastCommentCidOnCommentsChange = (options: AuthorCommentsOptions, comme
   }
 
   // make sure lastComment is newer than all comments already in bufferedComments
-  const bufferedComments: Comment[] = [...bufferedCommentCids[options.authorAddress]].map((commentCid: string) => comments[commentCid])
+  const bufferedComments: CommentState[] = [...bufferedCommentCids[options.authorAddress]].map((commentCid: string) => comments[commentCid])
   for (const bufferedComment of bufferedComments) {
     if ((bufferedComment?.timestamp || 0) > comment.timestamp) {
       log.trace(`authorsCommentsStore setLastCommentCidOnCommentsChange don't set lastCommentCid older than buffered comments`, {

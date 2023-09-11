@@ -5,7 +5,16 @@ import localForage from 'localforage'
 import localForageLru from '../../lib/localforage-lru'
 const accountsDatabase = localForage.createInstance({name: 'accounts'})
 const accountsMetadataDatabase = localForage.createInstance({name: 'accountsMetadata'})
-import {Accounts, AccountNamesToAccountIds, CreateCommentOptions, Account, Comment, AccountsComments, AccountCommentReply, AccountsCommentsReplies} from '../../types'
+import {
+  Accounts,
+  AccountNamesToAccountIds,
+  CreateCommentOptions,
+  Account,
+  CommentState,
+  AccountsComments,
+  AccountCommentReply,
+  AccountsCommentsReplies,
+} from '../../types'
 import utils from '../../lib/utils'
 import {getDefaultPlebbitOptions} from './account-generator'
 import Logger from '@plebbit/plebbit-logger'
@@ -168,7 +177,7 @@ const getAccountCommentsDatabase = (accountId: string) => {
   return accountsCommentsDatabases[accountId]
 }
 
-const addAccountComment = async (accountId: string, comment: CreateCommentOptions | Comment, accountCommentIndex?: number) => {
+const addAccountComment = async (accountId: string, comment: CreateCommentOptions | CommentState, accountCommentIndex?: number) => {
   const accountCommentsDatabase = getAccountCommentsDatabase(accountId)
   const length = ((await accountCommentsDatabase.getItem('length')) as number) || 0
   comment = utils.clone({...comment, signer: undefined})

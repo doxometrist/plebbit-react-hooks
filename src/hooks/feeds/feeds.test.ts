@@ -1,6 +1,6 @@
 import {act, renderHook} from '@testing-library/react-hooks'
 import testUtils from '../../lib/test-utils'
-import {Comment} from '../../types'
+import {CommentState} from '../../types'
 import {useFeed, useBufferedFeeds, useAccount, useSubplebbit, setPlebbitJs} from '../..'
 import * as accountsActions from '../../stores/accounts/accounts-actions'
 import localForageLru from '../../lib/localforage-lru'
@@ -334,7 +334,7 @@ describe('feeds', () => {
 
     test('get multiple subplebbits with filter and scroll to multiple pages', async () => {
       // filter only comment cids that contain a '5'
-      const filter = (comment: Comment) => !!comment.cid.match('5')
+      const filter = (comment: CommentState) => comment.cid && !!comment.cid.match('5')
       rendered.rerender({
         subplebbitAddresses: ['subplebbit address 1', 'subplebbit address 2', 'subplebbit address 3'],
         filter,
@@ -359,7 +359,7 @@ describe('feeds', () => {
 
       // make sure adding a new filter function creates a new feed (if the function isn't the same function)
       expect(Object.keys(feedsStore.getState().feedsOptions).length).toBe(1)
-      const filter2 = (comment: Comment) => !!comment.cid.match('5')
+      const filter2 = (comment: CommentState) => comment.cid && !!comment.cid.match('5')
       rendered.rerender({
         subplebbitAddresses: ['subplebbit address 1', 'subplebbit address 2', 'subplebbit address 3'],
         filter: filter2,

@@ -5,14 +5,14 @@ import accountsDatabase from './accounts-database'
 import Logger from '@plebbit/plebbit-logger'
 import assert from 'assert'
 const log = Logger('plebbit-react-hooks:accounts:stores')
-import {Account, PublishCommentOptions, AccountCommentReply, Comment, AccountsComments, AccountCommentsReplies, Subplebbit} from '../../types'
+import {Account, PublishCommentOptions, AccountCommentReply, CommentState, AccountsComments, AccountCommentsReplies, Subplebbit} from '../../types'
 import utils from '../../lib/utils'
 
 // TODO: we currently subscribe to updates for every single comment
 // in the user's account history. This probably does not scale, we
 // need to eventually schedule and queue older comments to look
 // for updates at a lower priority.
-export const startUpdatingAccountCommentOnCommentUpdateEvents = async (comment: Comment, account: Account, accountCommentIndex: number) => {
+export const startUpdatingAccountCommentOnCommentUpdateEvents = async (comment: CommentState, account: Account, accountCommentIndex: number) => {
   assert(typeof accountCommentIndex === 'number', `startUpdatingAccountCommentOnCommentUpdateEvents accountCommentIndex '${accountCommentIndex}' not a number`)
   assert(typeof account?.id === 'string', `startUpdatingAccountCommentOnCommentUpdateEvents account '${account}' account.id '${account?.id}' not a string`)
   const commentArgument = comment
@@ -37,7 +37,7 @@ export const startUpdatingAccountCommentOnCommentUpdateEvents = async (comment: 
     comment = await account.plebbit.createComment(comment)
   }
 
-  comment.on('update', async (updatedComment: Comment) => {
+  comment.on('update', async (updatedComment: CommentState) => {
     // merge should not be needed if plebbit-js is implemented properly, but no harm in fixing potential errors
     updatedComment = utils.merge(commentArgument, comment, updatedComment)
     await accountsDatabase.addAccountComment(account.id, updatedComment, accountCommentIndex)
@@ -115,7 +115,7 @@ export const startUpdatingAccountCommentOnCommentUpdateEvents = async (comment: 
 
 // internal accounts action: the comment CID is not known at the time of publishing, so every time
 // we fetch a new comment, check if its our own, and attempt to add the CID
-export const addCidToAccountComment = async (comment: Comment) => {
+export const addCidToAccountComment = async (comment: CommentState) => {
   const {accounts} = accountsStore.getState()
   assert(accounts, `can't use accountsStore.accountActions before initialized`)
   const accountCommentsWithoutCids = getAccountsCommentsWithoutCids()[comment?.author?.address]

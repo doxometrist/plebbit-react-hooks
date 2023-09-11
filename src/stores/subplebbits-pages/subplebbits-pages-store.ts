@@ -2,7 +2,7 @@ import utils from '../../lib/utils'
 import Logger from '@plebbit/plebbit-logger'
 // include subplebbits pages store with feeds for debugging
 const log = Logger('plebbit-react-hooks:feeds:stores')
-import {Subplebbit, SubplebbitPage, SubplebbitsPages, Account, Comment, Comments} from '../../types'
+import {Subplebbit, SubplebbitPage, SubplebbitsPages, Account, CommentState, Comments} from '../../types'
 import accountsStore from '../accounts'
 import subplebbitsStore, {SubplebbitsState} from '../subplebbits'
 import localForageLru from '../../lib/localforage-lru'
@@ -81,7 +81,7 @@ const subplebbitsPagesStore = createStore<SubplebbitsPagesState>((setState: Func
     }
 
     // find new comments in the page
-    const flattenedComments: Comment[] = utils.flattenCommentsPages(page)
+    const flattenedComments: CommentState[] = utils.flattenCommentsPages(page)
     const {comments} = getState()
     let hasNewComments = false
     // todo not sure what is the data structure intended here

@@ -1,4 +1,4 @@
-import {useMemo, useState, useEffect} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import isEqual from 'lodash.isequal'
 import useAccountsStore from '../../stores/accounts'
 import Logger from '@plebbit/plebbit-logger'
@@ -6,38 +6,60 @@ const log = Logger('plebbit-react-hooks:accounts:hooks')
 import assert from 'assert'
 import {useListSubplebbits, useSubplebbits} from '../subplebbits'
 import type {
+  Account,
   AccountComment,
   AccountComments,
-  Account,
+  AccountEdit,
+  AccountEdits,
   Accounts,
-  AccountVote,
   AccountsComments,
   AccountsCommentsReplies,
+  AccountSubplebbit,
+  AccountVote,
+  CommentState,
+  Subplebbit,
+  UseAccountCommentOptions,
+  UseAccountCommentResult,
+  UseAccountCommentsOptions,
+  UseAccountCommentsResult,
+  UseAccountEditsOptions,
+  UseAccountEditsResult,
+  UseAccountOptions,
+  UseAccountResult,
   UseAccountSubplebbitsOptions,
   UseAccountSubplebbitsResult,
   UseAccountVoteOptions,
   UseAccountVoteResult,
   UseAccountVotesOptions,
   UseAccountVotesResult,
-  UseAccountCommentsOptions,
-  UseAccountCommentsResult,
-  UseAccountCommentOptions,
-  UseAccountCommentResult,
-  UseNotificationsOptions,
-  UseNotificationsResult,
-  UseAccountEditsOptions,
-  UseAccountEditsResult,
   UseEditedCommentOptions,
   UseEditedCommentResult,
-  UseAccountOptions,
-  UseAccountResult,
+  UseNotificationsOptions,
+  UseNotificationsResult,
   UsePubsubSubscribeOptions,
   UsePubsubSubscribeResult,
-  Subplebbit,
-  AccountSubplebbit,
 } from '../../types'
 import {useAccountsWithCalculatedProperties, useAccountWithCalculatedProperties, useCalculatedNotifications} from './utils'
 import useInterval from '../utils/use-interval'
+
+// TYPES
+type PropertyNameEditsType = {
+  [propertyName: string]: {
+    timestamp: number
+    value: string
+  }
+}
+
+// CONSTANTS
+const DEFAULT_EDITED_RESULT = {
+  editedComment: undefined,
+  succeededEdits: {},
+  pendingEdits: {},
+  failedEdits: {},
+  state: undefined,
+}
+
+const EXPIRY_TIME = 60 * 20
 
 /**
  * @param accountName - The nickname of the account, e.g. 'Account 1'. If no accountName is provided, return
@@ -119,24 +141,41 @@ export function useAccountSubplebbits(options?: UseAccountSubplebbitsOptions): U
   const accountsStoreAccountSubplebbits = useAccountsStore((state) => state.accounts[accountId || '']?.subplebbits)
 
   // get all unique account subplebbit addresses
-  const ownerSubplebbitAddresses = useListSubplebbits()
-  const uniqueSubplebbitAddresses: string[] = useMemo(() => {
-    const accountSubplebbitAddresses: string[] = []
-    if (accountsStoreAccountSubplebbits) {
-      for (const subplebbitAddress in accountsStoreAccountSubplebbits) {
-        accountSubplebbitAddresses.push(subplebbitAddress)
-      }
-    }
-    const uniqueSubplebbitAddresses = [...new Set([...ownerSubplebbitAddresses, ...accountSubplebbitAddresses])].sort()
-    return uniqueSubplebbitAddresses
-  }, [accountsStoreAccountSubplebbits, ownerSubplebbitAddresses])
+  const ownerSubplebbitAddresses: string[] = useListSubplebbits()
+  const uniqueSubplebbitAddresses: string[] = useUniqueAccountAddresses(accountsStoreAccountSubplebbits, ownerSubplebbitAddresses)
 
   // fetch all subplebbit data
-  const {subplebbits: subplebbitsArray} = useSubplebbits({subplebbitAddresses: uniqueSubplebbitAddresses, accountName})
-  const subplebbits: Subplebbit[] = useMemo(() => {
+  const {subplebbits: subplebbitsArray} = useSubplebbits({
+    subplebbitAddresses: uniqueSubplebbitAddresses,
+    accountName,
+  })
+
+  const subplebbits: Subplebbit[] = useUniqueSubplebbitAddresses(subplebbitsArray, uniqueSubplebbitAddresses)
+
+  // merged subplebbit data with account.subplebbits data
+  const accountSubplebbits: AccountSubplebbit[] = useMergedSubplebbitData(subplebbits, accountsStoreAccountSubplebbits, ownerSubplebbitAddresses)
+
+  if (accountId) {
+    log('useAccountSubplebbits', {accountSubplebbits})
+  }
+
+  const state = accountId ? 'succeeded' : 'initializing'
+
+  return useMemo(
+    () => ({
+      accountSubplebbits,
+      state,
+      error: undefined,
+      errors: [],
+    }),
+    [accountSubplebbits, state]
+  )
+}
+
+function useUniqueSubplebbitAddresses(subplebbitsArray: (Subplebbit | undefined)[], uniqueSubplebbitAddresses: string[]): Subplebbit[] {
+  return useMemo(() => {
     // alt map syntax
     // const newSubplebbits = subplebbitsArray.map((m, i)=>{return {...m, address: uniqueSubplebbitAddresses[i]}})
-
     const subplebbits: Subplebbit[] = []
     for (const [i, subplebbit] of subplebbitsArray.entries()) {
       subplebbits[uniqueSubplebbitAddresses[i]] = {
@@ -147,9 +186,34 @@ export function useAccountSubplebbits(options?: UseAccountSubplebbitsOptions): U
     }
     return subplebbits
   }, [subplebbitsArray, uniqueSubplebbitAddresses])
+}
 
-  // merged subplebbit data with account.subplebbits data
-  const accountSubplebbits: AccountSubplebbit[] = useMemo(() => {
+function useUniqueAccountAddresses(
+  accountsStoreAccountSubplebbits: {
+    [subplebbitAddress: string]: AccountSubplebbit
+  },
+  ownerSubplebbitAddresses: string[]
+): string[] {
+  return useMemo(() => {
+    const accountSubplebbitAddresses: string[] = []
+    if (accountsStoreAccountSubplebbits) {
+      for (const subplebbitAddress in accountsStoreAccountSubplebbits) {
+        accountSubplebbitAddresses.push(subplebbitAddress)
+      }
+    }
+    const uniqueSubplebbitAddresses = [...new Set([...ownerSubplebbitAddresses, ...accountSubplebbitAddresses])].sort()
+    return uniqueSubplebbitAddresses
+  }, [accountsStoreAccountSubplebbits, ownerSubplebbitAddresses])
+}
+
+function useMergedSubplebbitData(
+  subplebbits: Subplebbit[],
+  accountsStoreAccountSubplebbits: {
+    [subplebbitAddress: string]: AccountSubplebbit
+  },
+  ownerSubplebbitAddresses: string[]
+): AccountSubplebbit[] {
+  return useMemo(() => {
     const accountSubplebbits: AccountSubplebbit[] = {...subplebbits}
     if (accountsStoreAccountSubplebbits) {
       for (const subplebbitAddress in accountsStoreAccountSubplebbits) {
@@ -167,22 +231,6 @@ export function useAccountSubplebbits(options?: UseAccountSubplebbitsOptions): U
     }
     return accountSubplebbits
   }, [accountsStoreAccountSubplebbits, ownerSubplebbitAddresses, subplebbits])
-
-  if (accountId) {
-    log('useAccountSubplebbits', {accountSubplebbits})
-  }
-
-  const state = accountId ? 'succeeded' : 'initializing'
-
-  return useMemo(
-    () => ({
-      accountSubplebbits,
-      state,
-      error: undefined,
-      errors: [],
-    }),
-    [accountSubplebbits, state]
-  )
 }
 
 /**
@@ -231,7 +279,7 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
   )
 }
 
-const getAccountCommentsStates = (accountComments: AccountComment[]) => {
+const getAccountCommentsStates = (accountComments: AccountComment[]): string[] => {
   // no longer consider an pending ater an expiry time of 20 minutes, consider failed
   const now = Math.round(Date.now() / 1000)
   const expiryTime = now - 60 * 20
@@ -240,15 +288,10 @@ const getAccountCommentsStates = (accountComments: AccountComment[]) => {
   for (const accountComment of accountComments) {
     let state = 'succeeded'
     if (!accountComment.cid) {
-      if (accountComment.timestamp > expiryTime) {
-        state = 'pending'
-      } else {
-        state = 'failed'
-      }
+      state = accountComment.timestamp > expiryTime ? 'pending' : 'failed'
     }
     states.push(state)
   }
-
   return states
 }
 
@@ -261,12 +304,8 @@ export function useAccountComments(options?: UseAccountCommentsOptions): UseAcco
   const [accountCommentStates, setAccountCommentStates] = useState<string[]>([])
 
   const filteredAccountComments = useMemo(() => {
-    if (!accountComments) {
-      return []
-    }
-    if (filter) {
-      return accountComments.filter(filter)
-    }
+    if (!accountComments) return []
+    if (filter) return accountComments.filter(filter)
     return accountComments
   }, [accountComments, filter])
 
@@ -286,11 +325,19 @@ export function useAccountComments(options?: UseAccountCommentsOptions): UseAcco
 
   const filteredAccountCommentsWithStates = useMemo(() => {
     const states = getAccountCommentsStates(filteredAccountComments)
-    return filteredAccountComments.map((comment, i) => ({...comment, state: states[i] || 'initializing'}))
+    return filteredAccountComments.map((comment, i) => ({
+      ...comment,
+      state: states[i] || 'initializing',
+    }))
   }, [filteredAccountComments, accountCommentStates])
 
   if (accountComments && options) {
-    log('useAccountComments', {accountId, filteredAccountCommentsWithStates, accountComments, filter})
+    log('useAccountComments', {
+      accountId,
+      filteredAccountCommentsWithStates,
+      accountComments,
+      filter,
+    })
   }
 
   const state = accountId ? 'succeeded' : 'initializing'
@@ -309,11 +356,11 @@ export function useAccountComments(options?: UseAccountCommentsOptions): UseAcco
 /**
  * Returns an account's single comment, e.g. a pending comment they published.
  */
-export function useAccountComment(options?: UseAccountCommentOptions): UseAccountCommentResult {
+export function useAccountComment(options?: UseAccountCommentOptions) {
   assert(!options || typeof options === 'object', `useAccountComment options argument '${options}' not an object`)
   const {commentIndex, accountName} = options || {}
   const {accountComments} = useAccountComments({accountName})
-  const accountComment = useMemo(() => accountComments?.[Number(commentIndex)] || {}, [accountComments, commentIndex])
+  const accountComment: AccountComment = useMemo(() => accountComments?.[Number(commentIndex)] || {}, [accountComments, commentIndex])
   const state = accountComment.state || 'initializing'
 
   return useMemo(
@@ -353,7 +400,12 @@ export function useAccountVotes(options?: UseAccountVotesOptions): UseAccountVot
   }, [accountVotes, filter])
 
   if (accountVotes && filter) {
-    log('useAccountVotes', {accountId, filteredAccountVotesArray, accountVotes, filter})
+    log('useAccountVotes', {
+      accountId,
+      filteredAccountVotesArray,
+      accountVotes,
+      filter,
+    })
   }
 
   // TODO: add failed / pending states
@@ -406,7 +458,7 @@ export function useAccountEdits(options?: UseAccountEditsOptions): UseAccountEdi
   const accountEdits = useAccountsStore((state) => state.accountsEdits[accountId || ''])
 
   const accountEditsArray = useMemo(() => {
-    const accountEditsArray = []
+    const accountEditsArray: AccountEdits[] = []
     for (const i in accountEdits) {
       accountEditsArray.push(...accountEdits[i])
     }
@@ -437,7 +489,7 @@ export function useAccountEdits(options?: UseAccountEditsOptions): UseAccountEdi
 }
 
 interface EditedResult {
-  editedComment: undefined
+  editedComment: CommentState | undefined
   succeededEdits: {}
   pendingEdits: {}
   failedEdits: {}
@@ -453,53 +505,32 @@ export function useEditedComment(options?: UseEditedCommentOptions): UseEditedCo
   const accountId = useAccountId(accountName)
   const commentEdits = useAccountsStore((state) => state.accountsEdits[accountId || '']?.[comment?.cid || ''])
 
-  let initialState = 'initializing'
-  if (accountId && comment?.cid) {
-    initialState = 'unedited'
-  }
+  let initialState = accountId && comment?.cid ? 'initializing' : 'unedited'
 
-  const editedResult: EditedResult = useMemo(() => {
-    const editedResult: EditedResult = {
-      editedComment: undefined,
-      succeededEdits: {},
-      pendingEdits: {},
-      failedEdits: {},
-      state: undefined,
-    }
+  const editedResult: EditedResult = useEditedResult(commentEdits, comment)
+
+  return useMemo(
+    () => ({
+      ...editedResult,
+      state: editedResult.state || initialState,
+      error: undefined,
+      errors: [],
+    }),
+    [editedResult, initialState]
+  )
+}
+
+function useEditedResult(commentEdits: AccountEdit[], comment: CommentState | undefined): EditedResult {
+  return useMemo(() => {
+    const editedResult: EditedResult = DEFAULT_EDITED_RESULT
 
     // there are no edits
-    if (!commentEdits?.length) {
-      return editedResult
-    }
-
-    // don't include these props as they are not edit props, they are publication props
-    const nonEditPropertyNames = new Set(['author, signer', 'commentCid', 'subplebbitAddress', 'timestamp'])
+    if (!commentEdits?.length) return editedResult
 
     // iterate over commentEdits and consolidate them into 1 propertyNameEdits object
-    const propertyNameEdits: any = {}
-    for (const commentEdit of commentEdits) {
-      for (const propertyName in commentEdit) {
-        // not valid edited properties
-        if (commentEdit[propertyName] === undefined || nonEditPropertyNames.has(propertyName)) {
-          continue
-        }
-        const previousTimestamp = propertyNameEdits[propertyName]?.timestamp || 0
-        // only use the latest propertyNameEdit timestamp
-        if (commentEdit.timestamp > previousTimestamp) {
-          propertyNameEdits[propertyName] = {
-            timestamp: commentEdit.timestamp,
-            value: commentEdit[propertyName],
-            // NOTE: don't use comment edit challengeVerification.challengeSuccess
-            // to know if an edit has failed or succeeded, since another mod can also edit
-            // if another mod overrides an edit, consider the edit failed
-          }
-        }
-      }
-    }
-
+    const propertyNameEdits: PropertyNameEditsType = consolidatePropertyNameEdits(commentEdits)
     const now = Math.round(Date.now() / 1000)
     // no longer consider an edit pending ater an expiry time of 20 minutes
-    const expiryTime = 60 * 20
 
     // iterate over propertyNameEdits and find if succeeded, pending or failed
     for (const propertyName in propertyNameEdits) {
@@ -538,37 +569,31 @@ export function useEditedComment(options?: UseEditedCommentOptions): UseEditedCo
       if (comment.updatedAt < propertyNameEdit.timestamp) {
         setPropertyNameEditState('pending')
         continue
-      }
+      } // comment.updatedAt is newer than propertyNameEdit, a comment update
 
-      // comment.updatedAt is newer than propertyNameEdit, a comment update
       // has been received after the edit was published so we can evaluate
       else {
         // comment has propertyNameEdit, propertyNameEdit succeeded
         if (isEqual(comment[propertyName], propertyNameEdit.value)) {
           setPropertyNameEditState('succeeded')
           continue
-        }
-
-        // comment does not have propertyNameEdit
+        } // comment does not have propertyNameEdit
         else {
           // propertyNameEdit is newer than 20min, it is too recent to evaluate
           // so we should assume pending
-          if (propertyNameEdit.timestamp > now - expiryTime) {
+          if (propertyNameEdit.timestamp > now - EXPIRY_TIME) {
             setPropertyNameEditState('pending')
             continue
-          }
-
-          // propertyNameEdit is older than 20min, we can evaluate it
+          } // propertyNameEdit is older than 20min, we can evaluate it
           else {
             // comment update was received too shortly after propertyNameEdit was
             // published, assume pending until a more recent comment update is received
             const timeSinceUpdate = comment.updatedAt - propertyNameEdit.timestamp
-            if (timeSinceUpdate < expiryTime) {
+            if (timeSinceUpdate < EXPIRY_TIME) {
               setPropertyNameEditState('pending')
               continue
-            }
+            } // comment update time is sufficiently distanced from propertyNameEdit
 
-            // comment update time is sufficiently distanced from propertyNameEdit
             // and comment doesn't have propertyNameEdit, assume failed
             else {
               setPropertyNameEditState('failed')
@@ -592,16 +617,6 @@ export function useEditedComment(options?: UseEditedCommentOptions): UseEditedCo
 
     return editedResult
   }, [comment, commentEdits])
-
-  return useMemo(
-    () => ({
-      ...editedResult,
-      state: editedResult.state || initialState,
-      error: undefined,
-      errors: [],
-    }),
-    [editedResult, initialState]
-  )
 }
 
 /**
@@ -632,14 +647,20 @@ export function usePubsubSubscribe(options?: UsePubsubSubscribeOptions): UsePubs
       .catch((error) => {
         setErrors([...errors, error])
         setState('failed')
-        log.error('usePubsubSubscribe plebbit.pubsubSubscribe error', {subplebbitAddress, error})
+        log.error('usePubsubSubscribe plebbit.pubsubSubscribe error', {
+          subplebbitAddress,
+          error,
+        })
       })
 
     // unsub on component unmount
     return function () {
       account.plebbit.pubsubUnsubscribe(subplebbitAddress).catch((error) => {
         setErrors([...errors, error])
-        log.error('usePubsubSubscribe plebbit.pubsubUnsubscribe error', {subplebbitAddress, error})
+        log.error('usePubsubSubscribe plebbit.pubsubUnsubscribe error', {
+          subplebbitAddress,
+          error,
+        })
       })
     }
   }, [account?.plebbit, subplebbitAddress])
@@ -652,4 +673,31 @@ export function usePubsubSubscribe(options?: UsePubsubSubscribeOptions): UsePubs
     }),
     [state, errors]
   )
+}
+
+function consolidatePropertyNameEdits(commentEdits: AccountEdit[]): PropertyNameEditsType {
+  // don't include these props as they are not edit props, they are publication props
+  const nonEditPropertyNames: Set<string> = new Set(['author, signer', 'commentCid', 'subplebbitAddress', 'timestamp'])
+
+  const propertyNameEdits: PropertyNameEditsType = {}
+  for (const commentEdit of commentEdits) {
+    for (const propertyName in commentEdit) {
+      // not valid edited properties
+      if (commentEdit[propertyName] === undefined || nonEditPropertyNames.has(propertyName)) {
+        continue
+      }
+      const previousTimestamp = propertyNameEdits[propertyName]?.timestamp || 0
+      // only use the latest propertyNameEdit timestamp
+      if (commentEdit.timestamp > previousTimestamp) {
+        propertyNameEdits[propertyName] = {
+          timestamp: commentEdit.timestamp,
+          value: commentEdit[propertyName],
+          // NOTE: don't use comment edit challengeVerification.challengeSuccess
+          // to know if an edit has failed or succeeded, since another mod can also edit
+          // if another mod overrides an edit, consider the edit failed
+        }
+      }
+    }
+  }
+  return propertyNameEdits
 }

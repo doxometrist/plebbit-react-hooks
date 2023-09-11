@@ -4,7 +4,7 @@ import useAuthorsCommentsStore, {resetAuthorsCommentsDatabaseAndStore, commentsP
 import accountsStore from '../accounts'
 import commentsStore from '../comments'
 import {getUpdatedBufferedComments} from './utils'
-import {CommentsFilter, Comment, Account} from '../../types'
+import {CommentsFilter, CommentState, Account} from '../../types'
 import {setPlebbitJs} from '../..'
 import PlebbitJsMock, {Plebbit} from '../../lib/plebbit-js/plebbit-js-mock'
 setPlebbitJs(PlebbitJsMock)
@@ -396,7 +396,7 @@ describe('authors comments store', () => {
 
     // add another author comments with post filter
     const postFilterName = authorAddress + '-post-filter'
-    const postFilter = (comment: Comment) => !comment.parentCid
+    const postFilter = (comment: CommentState) => !comment.parentCid
     act(() => {
       rendered.result.current.addAuthorCommentsToStore(postFilterName, authorAddress, commentCid, postFilter, account)
     })
@@ -415,7 +415,7 @@ describe('authors comments store', () => {
 
     // add another author comments with reply filter
     const replyFilterName = authorAddress + '-reply-filter'
-    const replyFilter = (comment: Comment) => !!comment.parentCid
+    const replyFilter = (comment: CommentState) => !!comment.parentCid
     act(() => {
       rendered.result.current.addAuthorCommentsToStore(replyFilterName, authorAddress, commentCid, replyFilter, account)
     })
@@ -450,7 +450,7 @@ describe('authors comments store', () => {
 
     // add another author comments with subplebbit filter (0 matching)
     const subplebbitFilterName = authorAddress + '-subplebbit-filter'
-    const subplebbitFilter = (comment: Comment) => comment.subplebbitAddress === `doesn't exist`
+    const subplebbitFilter = (comment: CommentState) => comment.subplebbitAddress === `doesn't exist`
     act(() => {
       rendered.result.current.addAuthorCommentsToStore(subplebbitFilterName, authorAddress, commentCid, subplebbitFilter, account)
     })
@@ -626,7 +626,7 @@ const getBufferedComments = (rendered: any, authorCommentsName: string, authorAd
   const {comments} = commentsStore.getState()
   const loadedComments = rendered.result.current.loadedComments[authorCommentsName]
   const allBufferedComments: any = [...rendered.result.current.bufferedCommentCids[authorAddress]].map((commentCid: string) => comments[commentCid])
-  const filteredAndOrderedBufferedComments: Comment[] = getUpdatedBufferedComments(loadedComments, allBufferedComments, filter, comments)
+  const filteredAndOrderedBufferedComments: CommentState[] = getUpdatedBufferedComments(loadedComments, allBufferedComments, filter, comments)
   return filteredAndOrderedBufferedComments
 }
 

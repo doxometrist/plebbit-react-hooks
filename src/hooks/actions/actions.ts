@@ -21,7 +21,7 @@ import type {
   UsePublishSubplebbitEditResult,
   Challenge,
   ChallengeVerification,
-  Comment,
+  CommentState,
   CommentEdit,
   SubplebbitEdit,
   Vote,
@@ -169,7 +169,7 @@ export function usePublishComment(options?: UsePublishCommentOptions): UsePublis
 
   // define onChallenge if not defined
   const originalOnChallenge = publishCommentOptions.onChallenge
-  const onChallenge = async (challenge: Challenge, comment: Comment) => {
+  const onChallenge = async (challenge: Challenge, comment: CommentState) => {
     // cannot set a function directly with setState
     setPublishChallengeAnswers(() => comment?.publishChallengeAnswers.bind(comment))
     setChallenge(challenge)
@@ -179,7 +179,7 @@ export function usePublishComment(options?: UsePublishCommentOptions): UsePublis
 
   // define onChallengeVerification if not defined
   const originalOnChallengeVerification = publishCommentOptions.onChallengeVerification
-  const onChallengeVerification = async (challengeVerification: ChallengeVerification, comment: Comment) => {
+  const onChallengeVerification = async (challengeVerification: ChallengeVerification, comment: CommentState) => {
     setChallengeVerification(challengeVerification)
     originalOnChallengeVerification?.(challengeVerification, comment)
   }

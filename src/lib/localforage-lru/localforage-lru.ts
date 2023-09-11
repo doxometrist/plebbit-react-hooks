@@ -15,7 +15,6 @@ function createLocalForageInstance<T>(localForageLruOptions: LocalForageInstance
     database2: LocalForage,
     databaseSize: number,
     initialized = false
-
   ;(async () => {
     const localForage1 = localForage.createInstance({
       ...localForageOptions,
@@ -58,7 +57,12 @@ function createLocalForageInstance<T>(localForageLruOptions: LocalForageInstance
         try {
           await database1.setItem(key, value)
         } catch (error) {
-          console.error('localforageLru.setItem setItem error', {error, errorMessage: error?.message, key, value})
+          console.error('localforageLru.setItem setItem error', {
+            error,
+            errorMessage: error?.message ?? 'unknown error',
+            key,
+            value,
+          })
           throw error
         }
       } else {
@@ -91,10 +95,15 @@ function createLocalForageInstance<T>(localForageLruOptions: LocalForageInstance
     try {
       await database1.setItem(key, value)
     } catch (error) {
-      console.error('localforageLru updateDatabases setItem error', {error, errorMessage: error?.message, key, value})
+      console.error('localforageLru updateDatabases setItem error', {
+        error,
+        errorMessage: error?.message ?? 'unknown error',
+        key,
+        value,
+      })
 
       // ignore this error, don't know why it happens
-      if (error?.message?.includes?.('unit storage quota has been exceeded')) {
+      if (error.message && error?.message?.includes?.('unit storage quota has been exceeded')) {
         return
       }
       throw error
@@ -117,7 +126,7 @@ function createLocalForageInstance<T>(localForageLruOptions: LocalForageInstance
   }
 }
 
-const instances: Record<string, LocalForage> = {}
+const instances: Record<string, any> = {}
 
 const createInstance = <T>(localForageLruOptions: LocalForageInstanceProps<T>) => {
   if (typeof localForageLruOptions?.name !== 'string') {
