@@ -569,22 +569,27 @@ function useEditedResult(commentEdits: AccountEdit[], comment: CommentState | un
       if (comment.updatedAt < propertyNameEdit.timestamp) {
         setPropertyNameEditState('pending')
         continue
-      } // comment.updatedAt is newer than propertyNameEdit, a comment update
+      }
 
+      // comment.updatedAt is newer than propertyNameEdit, a comment update
       // has been received after the edit was published so we can evaluate
       else {
         // comment has propertyNameEdit, propertyNameEdit succeeded
         if (isEqual(comment[propertyName], propertyNameEdit.value)) {
           setPropertyNameEditState('succeeded')
           continue
-        } // comment does not have propertyNameEdit
+        }
+
+        // comment does not have propertyNameEdit
         else {
           // propertyNameEdit is newer than 20min, it is too recent to evaluate
           // so we should assume pending
           if (propertyNameEdit.timestamp > now - EXPIRY_TIME) {
             setPropertyNameEditState('pending')
             continue
-          } // propertyNameEdit is older than 20min, we can evaluate it
+          }
+
+          // propertyNameEdit is older than 20min, we can evaluate it
           else {
             // comment update was received too shortly after propertyNameEdit was
             // published, assume pending until a more recent comment update is received
@@ -592,8 +597,9 @@ function useEditedResult(commentEdits: AccountEdit[], comment: CommentState | un
             if (timeSinceUpdate < EXPIRY_TIME) {
               setPropertyNameEditState('pending')
               continue
-            } // comment update time is sufficiently distanced from propertyNameEdit
+            }
 
+            // comment update time is sufficiently distanced from propertyNameEdit
             // and comment doesn't have propertyNameEdit, assume failed
             else {
               setPropertyNameEditState('failed')
