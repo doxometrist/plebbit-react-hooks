@@ -1,25 +1,15 @@
-import {useEffect, useMemo, useState} from 'react'
-import isEqual from 'lodash.isequal'
-import useAccountsStore from '../../stores/accounts'
 import Logger from '@plebbit/plebbit-logger'
-const log = Logger('plebbit-react-hooks:accounts:hooks')
 import assert from 'assert'
-import {useListSubplebbits, useSubplebbits} from '../subplebbits'
+import {useEffect, useMemo, useState} from 'react'
+import useAccountsStore from '../../stores/accounts'
 import type {
   Account,
   AccountComment,
-  AccountComments,
-  AccountEdit,
   AccountEdits,
-  Accounts,
-  AccountsComments,
-  AccountsCommentsReplies,
   AccountSubplebbit,
   AccountVote,
-  CommentState,
   Subplebbit,
   UseAccountCommentOptions,
-  UseAccountCommentResult,
   UseAccountCommentsOptions,
   UseAccountCommentsResult,
   UseAccountEditsOptions,
@@ -39,27 +29,11 @@ import type {
   UsePubsubSubscribeOptions,
   UsePubsubSubscribeResult,
 } from '../../types'
-import {useAccountsWithCalculatedProperties, useAccountWithCalculatedProperties, useCalculatedNotifications} from './utils'
+import {useListSubplebbits, useSubplebbits} from '../subplebbits'
 import useInterval from '../utils/use-interval'
-
-// TYPES
-type PropertyNameEditsType = {
-  [propertyName: string]: {
-    timestamp: number
-    value: string
-  }
-}
-
-// CONSTANTS
-const DEFAULT_EDITED_RESULT = {
-  editedComment: undefined,
-  succeededEdits: {},
-  pendingEdits: {},
-  failedEdits: {},
-  state: undefined,
-}
-
-const EXPIRY_TIME = 60 * 20
+import {useEditedResult} from './useEditedResult'
+import {useAccountWithCalculatedProperties, useAccountsWithCalculatedProperties, useCalculatedNotifications} from './utils'
+const log = Logger('plebbit-react-hooks:accounts:hooks')
 
 /**
  * @param accountName - The nickname of the account, e.g. 'Account 1'. If no accountName is provided, return
@@ -282,7 +256,7 @@ export function useNotifications(options?: UseNotificationsOptions): UseNotifica
 const getAccountCommentsStates = (accountComments: AccountComment[]): string[] => {
   // no longer consider an pending ater an expiry time of 20 minutes, consider failed
   const now = Math.round(Date.now() / 1000)
-  const expiryTime = now - 60 * 20
+  const expiryTime = now - 1200 // 60 * 20
 
   const states: string[] = []
   for (const accountComment of accountComments) {
@@ -488,14 +462,6 @@ export function useAccountEdits(options?: UseAccountEditsOptions): UseAccountEdi
   )
 }
 
-interface EditedResult {
-  editedComment: CommentState | undefined
-  succeededEdits: {}
-  pendingEdits: {}
-  failedEdits: {}
-  state?: 'failed' | 'succeeded' | 'pending'
-}
-
 /**
  * Returns the comment edited (if has any edits), as well as the pending, succeeded or failed state of the edit.
  */
@@ -507,7 +473,7 @@ export function useEditedComment(options?: UseEditedCommentOptions): UseEditedCo
 
   let initialState = accountId && comment?.cid ? 'initializing' : 'unedited'
 
-  const editedResult: EditedResult = useEditedResult(commentEdits, comment)
+  const editedResult = useEditedResult(commentEdits, comment)
 
   return useMemo(
     () => ({
@@ -518,111 +484,6 @@ export function useEditedComment(options?: UseEditedCommentOptions): UseEditedCo
     }),
     [editedResult, initialState]
   )
-}
-
-function useEditedResult(commentEdits: AccountEdit[], comment: CommentState | undefined): EditedResult {
-  return useMemo(() => {
-    const editedResult: EditedResult = DEFAULT_EDITED_RESULT
-
-    // there are no edits
-    if (!commentEdits?.length) return editedResult
-
-    // iterate over commentEdits and consolidate them into 1 propertyNameEdits object
-    const propertyNameEdits: PropertyNameEditsType = consolidatePropertyNameEdits(commentEdits)
-    const now = Math.round(Date.now() / 1000)
-    // no longer consider an edit pending ater an expiry time of 20 minutes
-
-    // iterate over propertyNameEdits and find if succeeded, pending or failed
-    for (const propertyName in propertyNameEdits) {
-      const propertyNameEdit = propertyNameEdits[propertyName]
-
-      const setPropertyNameEditState = (state: 'succeeded' | 'pending' | 'failed') => {
-        // set propertyNameEdit e.g. editedResult.succeededEdits.removed = true
-        editedResult[`${state}Edits`][propertyName] = propertyNameEdit.value
-
-        // if any propertyNameEdit failed, consider the commentEdit failed
-        if (state === 'failed') {
-          editedResult.state = 'failed'
-        }
-        // if all propertyNameEdit succeeded, consider the commentEdit succeeded
-        if (state === 'succeeded' && !editedResult.state) {
-          editedResult.state = 'succeeded'
-        }
-        // if any propertyNameEdit are pending, and none have failed, consider the commentEdit pending
-        if (state === 'pending' && editedResult.state !== 'failed') {
-          editedResult.state = 'pending'
-        }
-        if (!editedResult.state) {
-          throw Error(`didn't define editedResult.state`)
-        }
-      }
-
-      // comment update hasn't been received, impossible to evaluate the status of a comment edit
-      // better to show pending than unedited, otherwise the editor might try to edit again
-      if (!comment?.updatedAt) {
-        setPropertyNameEditState('pending')
-        continue
-      }
-
-      // comment.updatedAt is older than propertyNameEdit, propertyNameEdit is pending
-      // because we haven't received the update yet and can't evaluate
-      if (comment.updatedAt < propertyNameEdit.timestamp) {
-        setPropertyNameEditState('pending')
-        continue
-      }
-
-      // comment.updatedAt is newer than propertyNameEdit, a comment update
-      // has been received after the edit was published so we can evaluate
-      else {
-        // comment has propertyNameEdit, propertyNameEdit succeeded
-        if (isEqual(comment[propertyName], propertyNameEdit.value)) {
-          setPropertyNameEditState('succeeded')
-          continue
-        }
-
-        // comment does not have propertyNameEdit
-        else {
-          // propertyNameEdit is newer than 20min, it is too recent to evaluate
-          // so we should assume pending
-          if (propertyNameEdit.timestamp > now - EXPIRY_TIME) {
-            setPropertyNameEditState('pending')
-            continue
-          }
-
-          // propertyNameEdit is older than 20min, we can evaluate it
-          else {
-            // comment update was received too shortly after propertyNameEdit was
-            // published, assume pending until a more recent comment update is received
-            const timeSinceUpdate = comment.updatedAt - propertyNameEdit.timestamp
-            if (timeSinceUpdate < EXPIRY_TIME) {
-              setPropertyNameEditState('pending')
-              continue
-            }
-
-            // comment update time is sufficiently distanced from propertyNameEdit
-            // and comment doesn't have propertyNameEdit, assume failed
-            else {
-              setPropertyNameEditState('failed')
-              continue
-            }
-          }
-        }
-      }
-    }
-
-    // define editedComment
-    editedResult.editedComment = {...comment}
-    // add pending and succeeded props so the editor can see his changes right away
-    // don't add failed edits to reflect the current state of the edited comment
-    for (const propertyName in editedResult.pendingEdits) {
-      editedResult.editedComment[propertyName] = editedResult.pendingEdits[propertyName]
-    }
-    for (const propertyName in editedResult.succeededEdits) {
-      editedResult.editedComment[propertyName] = editedResult.succeededEdits[propertyName]
-    }
-
-    return editedResult
-  }, [comment, commentEdits])
 }
 
 /**
@@ -679,31 +540,4 @@ export function usePubsubSubscribe(options?: UsePubsubSubscribeOptions): UsePubs
     }),
     [state, errors]
   )
-}
-
-function consolidatePropertyNameEdits(commentEdits: AccountEdit[]): PropertyNameEditsType {
-  // don't include these props as they are not edit props, they are publication props
-  const nonEditPropertyNames: Set<string> = new Set(['author, signer', 'commentCid', 'subplebbitAddress', 'timestamp'])
-
-  const propertyNameEdits: PropertyNameEditsType = {}
-  for (const commentEdit of commentEdits) {
-    for (const propertyName in commentEdit) {
-      // not valid edited properties
-      if (commentEdit[propertyName] === undefined || nonEditPropertyNames.has(propertyName)) {
-        continue
-      }
-      const previousTimestamp = propertyNameEdits[propertyName]?.timestamp || 0
-      // only use the latest propertyNameEdit timestamp
-      if (commentEdit.timestamp > previousTimestamp) {
-        propertyNameEdits[propertyName] = {
-          timestamp: commentEdit.timestamp,
-          value: commentEdit[propertyName],
-          // NOTE: don't use comment edit challengeVerification.challengeSuccess
-          // to know if an edit has failed or succeeded, since another mod can also edit
-          // if another mod overrides an edit, consider the edit failed
-        }
-      }
-    }
-  }
-  return propertyNameEdits
 }
